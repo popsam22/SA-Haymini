@@ -289,10 +289,10 @@ export default function Organizations() {
                   <div className="text-2xl">{getTypeIcon(org.type)}</div>
                   <div>
                     <CardTitle className="text-lg">{org.name}</CardTitle>
-                    <CardDescription className="flex items-center space-x-2 mt-1">
+                    <div className="flex items-center space-x-2 mt-1">
                       {getTypeBadge(org.type)}
-                      <span className="text-xs text-muted-foreground">ID: {org.id}</span>
-                    </CardDescription>
+                      <CardDescription className="text-xs text-muted-foreground">ID: {org.id}</CardDescription>
+                    </div>
                   </div>
                 </div>
                 {getStatusBadge(org.status)}
