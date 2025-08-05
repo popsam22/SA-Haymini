@@ -36,6 +36,7 @@ const App = () => (
             <Route path="/cards" element={<Cards />} />
             <Route path="/device-control" element={<DeviceControl />} />
             <Route path="/biometrics" element={<Biometrics />} />
+            <Route path="/attendance" element={<Attendance />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/settings" element={<SettingsPage />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
