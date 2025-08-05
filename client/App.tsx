@@ -14,6 +14,7 @@ import UsersPage from "./pages/Users";
 import Cards from "./pages/Cards";
 import DeviceControl from "./pages/DeviceControl";
 import Biometrics from "./pages/Biometrics";
+import Attendance from "./pages/Attendance";
 import Notifications from "./pages/Notifications";
 import SettingsPage from "./pages/Settings";
 import NotFound from "./pages/NotFound";
