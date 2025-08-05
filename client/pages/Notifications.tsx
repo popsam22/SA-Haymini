@@ -310,7 +310,7 @@ export default function Notifications() {
         </div>
         <div className="flex space-x-3">
           <Button variant="outline" className="flex items-center space-x-2">
-            <Test className="h-4 w-4" />
+            <Zap className="h-4 w-4" />
             <span>Test Notification</span>
           </Button>
           <Dialog open={isTemplateDialogOpen} onOpenChange={setIsTemplateDialogOpen}>
