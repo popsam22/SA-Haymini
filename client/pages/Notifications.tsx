@@ -48,7 +48,7 @@ import {
   Clock,
   AlertTriangle,
   Save,
-  Test
+  Zap
 } from "lucide-react";
 
 interface NotificationTemplate {
