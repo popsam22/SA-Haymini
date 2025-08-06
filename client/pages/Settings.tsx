@@ -932,7 +932,7 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <Label htmlFor="gmail-client-secret">Google Client Secret</Label>
-                  <Input id="gmail-client-secret" type="password" placeholder="••••••••••••••••••••••••" />
+                  <Input id="gmail-client-secret" type="password" placeholder="•••••••••••••••••���••••••" />
                 </div>
                 <div>
                   <Label htmlFor="gmail-redirect-uri">Redirect URI</Label>
@@ -1173,18 +1173,6 @@ export default function SettingsPage() {
                   <Label htmlFor="whatsapp-phone-id">Phone Number ID</Label>
                   <Input id="whatsapp-phone-id" placeholder="123456789012345" />
                 </div>
-                <div>
-                  <Label htmlFor="whatsapp-business-id">WhatsApp Business Account ID</Label>
-                  <Input id="whatsapp-business-id" placeholder="987654321098765" />
-                </div>
-                <div>
-                  <Label htmlFor="whatsapp-webhook-url">Webhook URL</Label>
-                  <Input id="whatsapp-webhook-url" defaultValue="https://yourdomain.com/webhooks/whatsapp" />
-                </div>
-                <div>
-                  <Label htmlFor="whatsapp-verify-token">Webhook Verify Token</Label>
-                  <Input id="whatsapp-verify-token" type="password" placeholder="••••••••••••••••••••••••" />
-                </div>
                 <Button className="w-full">
                   <Save className="h-4 w-4 mr-2" />
                   Save WhatsApp Configuration
@@ -1194,181 +1182,10 @@ export default function SettingsPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Message Templates Management</CardTitle>
-                <CardDescription>Manage WhatsApp Business message templates</CardDescription>
+                <CardTitle>WhatsApp Status</CardTitle>
+                <CardDescription>Current WhatsApp API status and analytics</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-medium">Template Approval Status</h4>
-                  <Button size="sm" variant="outline">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Template
-                  </Button>
-                </div>
-
-                <div className="space-y-3">
-                  {[
-                    {
-                      name: "welcome_message",
-                      status: "APPROVED",
-                      category: "UTILITY",
-                      language: "en",
-                      lastModified: "2024-01-10"
-                    },
-                    {
-                      name: "access_alert",
-                      status: "APPROVED",
-                      category: "UTILITY",
-                      language: "en",
-                      lastModified: "2024-01-08"
-                    },
-                    {
-                      name: "device_offline",
-                      status: "PENDING",
-                      category: "UTILITY",
-                      language: "en",
-                      lastModified: "2024-01-12"
-                    },
-                    {
-                      name: "card_expiry",
-                      status: "REJECTED",
-                      category: "MARKETING",
-                      language: "en",
-                      lastModified: "2024-01-05"
-                    }
-                  ].map((template) => (
-                    <div key={template.name} className="p-3 border rounded-lg">
-                      <div className="flex items-center justify-between mb-2">
-                        <div>
-                          <span className="font-medium">{template.name}</span>
-                          <Badge
-                            className={`ml-2 ${
-                              template.status === "APPROVED"
-                                ? "bg-green-100 text-green-800 border-green-200"
-                                : template.status === "PENDING"
-                                ? "bg-yellow-100 text-yellow-800 border-yellow-200"
-                                : "bg-red-100 text-red-800 border-red-200"
-                            }`}
-                          >
-                            {template.status}
-                          </Badge>
-                        </div>
-                        <Button variant="outline" size="sm">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        <p>Category: {template.category}</p>
-                        <p>Language: {template.language}</p>
-                        <p>Last Modified: {template.lastModified}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <Button variant="outline" className="w-full">
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Refresh Template Status
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>WhatsApp Analytics</CardTitle>
-                <CardDescription>Message delivery and engagement analytics</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="text-center p-3 border rounded">
-                    <div className="text-2xl font-bold text-blue-600">1,247</div>
-                    <div className="text-sm text-muted-foreground">Messages Sent</div>
-                    <div className="text-xs text-green-600">↑ 12% from last week</div>
-                  </div>
-                  <div className="text-center p-3 border rounded">
-                    <div className="text-2xl font-bold text-green-600">98.5%</div>
-                    <div className="text-sm text-muted-foreground">Delivery Rate</div>
-                    <div className="text-xs text-green-600">↑ 2% from last week</div>
-                  </div>
-                  <div className="text-center p-3 border rounded">
-                    <div className="text-2xl font-bold text-purple-600">847</div>
-                    <div className="text-sm text-muted-foreground">Messages Read</div>
-                    <div className="text-xs text-green-600">↑ 8% from last week</div>
-                  </div>
-                  <div className="text-center p-3 border rounded">
-                    <div className="text-2xl font-bold text-orange-600">15</div>
-                    <div className="text-sm text-muted-foreground">Failed Sends</div>
-                    <div className="text-xs text-red-600">↓ 5% from last week</div>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className="font-medium mb-2">Recent Activity</h4>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between p-2 bg-muted/50 rounded">
-                      <span>Welcome message sent to new user</span>
-                      <span className="text-muted-foreground">2 min ago</span>
-                    </div>
-                    <div className="flex justify-between p-2 bg-muted/50 rounded">
-                      <span>Access alert delivered successfully</span>
-                      <span className="text-muted-foreground">5 min ago</span>
-                    </div>
-                    <div className="flex justify-between p-2 bg-muted/50 rounded">
-                      <span>Device offline notification sent</span>
-                      <span className="text-muted-foreground">15 min ago</span>
-                    </div>
-                  </div>
-                </div>
-
-                <Button variant="outline" className="w-full">
-                  <BarChart3 className="h-4 w-4 mr-2" />
-                  View Detailed Analytics
-                </Button>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>WhatsApp Testing & Validation</CardTitle>
-                <CardDescription>Test your WhatsApp integration</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="test-phone">Test Phone Number</Label>
-                  <Input id="test-phone" placeholder="+1 555-123-4567" />
-                </div>
-                <div>
-                  <Label htmlFor="test-template">Template to Test</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select template" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="welcome_message">Welcome Message</SelectItem>
-                      <SelectItem value="access_alert">Access Alert</SelectItem>
-                      <SelectItem value="device_offline">Device Offline</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="test-variables">Template Variables (JSON)</Label>
-                  <Textarea
-                    id="test-variables"
-                    placeholder='{"user_name": "John Doe", "organization": "TechCorp"}'
-                    className="min-h-20"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Button variant="outline" className="w-full">
-                    <CheckCircle className="h-4 w-4 mr-2" />
-                    Validate Configuration
-                  </Button>
-                  <Button className="w-full">
-                    <MessageSquare className="h-4 w-4 mr-2" />
-                    Send Test Message
-                  </Button>
-                </div>
-
                 <div className="p-3 border rounded-lg bg-green-50">
                   <div className="flex items-center space-x-2">
                     <CheckCircle className="h-4 w-4 text-green-600" />
@@ -1378,6 +1195,22 @@ export default function SettingsPage() {
                     WhatsApp API is properly configured and ready to send messages.
                   </p>
                 </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center p-3 border rounded">
+                    <div className="text-2xl font-bold text-blue-600">1,247</div>
+                    <div className="text-sm text-muted-foreground">Messages Sent</div>
+                  </div>
+                  <div className="text-center p-3 border rounded">
+                    <div className="text-2xl font-bold text-green-600">98.5%</div>
+                    <div className="text-sm text-muted-foreground">Delivery Rate</div>
+                  </div>
+                </div>
+
+                <Button variant="outline" className="w-full">
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  View Detailed Analytics
+                </Button>
               </CardContent>
             </Card>
           </div>
