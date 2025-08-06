@@ -3,11 +3,36 @@ import "./global.css";
 // Suppress harmless ResizeObserver error from Radix UI components
 const originalError = console.error;
 console.error = (...args) => {
-  if (typeof args[0] === 'string' && args[0].includes('ResizeObserver loop completed with undelivered notifications')) {
+  if (typeof args[0] === 'string' && (
+    args[0].includes('ResizeObserver loop completed with undelivered notifications') ||
+    args[0].includes('ResizeObserver loop limit exceeded')
+  )) {
     return;
   }
   originalError(...args);
 };
+
+// Also suppress at window level for completeness
+window.addEventListener('error', (e) => {
+  if (e.message && (
+    e.message.includes('ResizeObserver loop completed with undelivered notifications') ||
+    e.message.includes('ResizeObserver loop limit exceeded')
+  )) {
+    e.preventDefault();
+    return false;
+  }
+});
+
+// Handle unhandled promise rejections
+window.addEventListener('unhandledrejection', (e) => {
+  if (e.reason && e.reason.message && (
+    e.reason.message.includes('ResizeObserver loop completed with undelivered notifications') ||
+    e.reason.message.includes('ResizeObserver loop limit exceeded')
+  )) {
+    e.preventDefault();
+    return false;
+  }
+});
 
 import { Toaster } from "@/components/ui/toaster";
 import { createRoot } from "react-dom/client";
