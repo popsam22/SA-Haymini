@@ -482,8 +482,8 @@ export default function Notifications() {
                     </div>
                     {org.emailEnabled && (
                       <div className="ml-6">
-                        <Input 
-                          value={org.emailAddress} 
+                        <Input
+                          defaultValue={org.emailAddress}
                           placeholder="Email address"
                           className="text-sm"
                         />
@@ -499,8 +499,8 @@ export default function Notifications() {
                     </div>
                     {org.smsEnabled && (
                       <div className="ml-6">
-                        <Input 
-                          value={org.phoneNumber} 
+                        <Input
+                          defaultValue={org.phoneNumber}
                           placeholder="Phone number"
                           className="text-sm"
                         />
@@ -516,8 +516,8 @@ export default function Notifications() {
                     </div>
                     {org.whatsappEnabled && (
                       <div className="ml-6">
-                        <Input 
-                          value={org.whatsappNumber} 
+                        <Input
+                          defaultValue={org.whatsappNumber}
                           placeholder="WhatsApp number"
                           className="text-sm"
                         />
@@ -864,7 +864,7 @@ export default function Notifications() {
                 </div>
                 <div>
                   <Label htmlFor="whatsapp-token">WhatsApp Business API Token</Label>
-                  <Input id="whatsapp-token" type="password" placeholder="••••••••" />
+                  <Input id="whatsapp-token" type="password" placeholder="••��•••••" />
                 </div>
                 <div>
                   <Label htmlFor="whatsapp-number">WhatsApp Business Number</Label>
