@@ -30,6 +30,12 @@ import {
   TableRow,
 } from "../components/ui/table";
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "../components/ui/accordion";
+import {
   Users,
   Plus,
   Search,
@@ -46,7 +52,10 @@ import {
   Phone,
   FileText,
   UserCheck,
-  UserX
+  UserX,
+  Filter,
+  Eye,
+  MoreHorizontal
 } from "lucide-react";
 
 interface User {
@@ -59,6 +68,7 @@ interface User {
   category: "staff" | "customer" | "visitor";
   department: string;
   organization: string;
+  organizationId: string;
   status: "active" | "inactive" | "suspended";
   assignedDevices: string[];
   cardNumber?: string;
@@ -68,13 +78,47 @@ interface User {
   lastAccess: string;
 }
 
+interface Organization {
+  id: string;
+  name: string;
+  totalUsers: number;
+  activeUsers: number;
+  departments: string[];
+}
+
 export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedOrganization, setSelectedOrganization] = useState("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isCsvUploadOpen, setIsCsvUploadOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<"organization" | "list">("organization");
+
+  const organizations: Organization[] = [
+    {
+      id: "ORG-001",
+      name: "TechCorp HQ",
+      totalUsers: 345,
+      activeUsers: 298,
+      departments: ["Engineering", "HR", "Finance", "Marketing", "Security"]
+    },
+    {
+      id: "ORG-002", 
+      name: "Metro University",
+      totalUsers: 1847,
+      activeUsers: 1634,
+      departments: ["Computer Science", "Library", "Student Services", "Cafeteria", "Dormitories"]
+    },
+    {
+      id: "ORG-003",
+      name: "Innovation Lab",
+      totalUsers: 89,
+      activeUsers: 76,
+      departments: ["R&D", "Lab Operations", "Administration"]
+    }
+  ];
 
   const users: User[] = [
     {
@@ -87,6 +131,7 @@ export default function UsersPage() {
       category: "staff",
       department: "Engineering",
       organization: "TechCorp HQ",
+      organizationId: "ORG-001",
       status: "active",
       assignedDevices: ["DEV-001", "DEV-002"],
       cardNumber: "CARD-001234",
@@ -105,6 +150,7 @@ export default function UsersPage() {
       category: "staff",
       department: "Library",
       organization: "Metro University",
+      organizationId: "ORG-002",
       status: "active",
       assignedDevices: ["DEV-004", "DEV-005"],
       cardNumber: "CARD-005678",
@@ -123,6 +169,7 @@ export default function UsersPage() {
       category: "customer",
       department: "Computer Science",
       organization: "Metro University",
+      organizationId: "ORG-002",
       status: "active",
       assignedDevices: ["DEV-004"],
       cardNumber: "CARD-009012",
@@ -141,6 +188,7 @@ export default function UsersPage() {
       category: "staff",
       department: "R&D",
       organization: "Innovation Lab",
+      organizationId: "ORG-003",
       status: "inactive",
       assignedDevices: ["DEV-003"],
       cardNumber: "CARD-003456",
@@ -159,6 +207,7 @@ export default function UsersPage() {
       category: "visitor",
       department: "Visitor",
       organization: "TechCorp HQ",
+      organizationId: "ORG-001",
       status: "active",
       assignedDevices: ["DEV-001"],
       cardNumber: "CARD-007890",
@@ -166,8 +215,50 @@ export default function UsersPage() {
       biometricEnabled: false,
       joinedDate: "2024-01-05",
       lastAccess: "5 hours ago"
+    },
+    {
+      id: "USR-006",
+      firstName: "Lisa",
+      lastName: "Wang",
+      email: "l.wang@techcorp.com",
+      phone: "+1 (555) 111-2222",
+      employeeId: "TC002",
+      category: "staff",
+      department: "HR",
+      organization: "TechCorp HQ",
+      organizationId: "ORG-001",
+      status: "active",
+      assignedDevices: ["DEV-001"],
+      cardNumber: "CARD-001235",
+      cardStatus: "active",
+      biometricEnabled: true,
+      joinedDate: "2023-02-01",
+      lastAccess: "4 hours ago"
+    },
+    {
+      id: "USR-007",
+      firstName: "Robert",
+      lastName: "Thompson",
+      email: "r.thompson@metrouniv.edu",
+      phone: "+1 (555) 333-4444",
+      employeeId: "MU003",
+      category: "staff",
+      department: "Student Services",
+      organization: "Metro University",
+      organizationId: "ORG-002",
+      status: "active",
+      assignedDevices: ["DEV-004"],
+      cardNumber: "CARD-005679",
+      cardStatus: "active",
+      biometricEnabled: false,
+      joinedDate: "2023-04-10",
+      lastAccess: "6 hours ago"
     }
   ];
+
+  const getUsersByOrganization = (orgId: string) => {
+    return users.filter(user => user.organizationId === orgId);
+  };
 
   const filteredUsers = users.filter(user => {
     const matchesSearch = 
@@ -177,8 +268,9 @@ export default function UsersPage() {
       user.employeeId.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesCategory = selectedCategory === "all" || user.category === selectedCategory;
+    const matchesOrg = selectedOrganization === "all" || user.organizationId === selectedOrganization;
     
-    return matchesSearch && matchesCategory;
+    return matchesSearch && matchesCategory && matchesOrg;
   });
 
   const getStatusBadge = (status: string) => {
@@ -233,7 +325,7 @@ export default function UsersPage() {
         <div>
           <h1 className="text-3xl font-bold text-foreground">Users Management</h1>
           <p className="text-muted-foreground mt-1">
-            Manage users, categories, and device assignments
+            Manage users across organizations, categories, and device assignments
           </p>
         </div>
         <div className="flex space-x-3">
@@ -333,9 +425,9 @@ export default function UsersPage() {
                         <SelectValue placeholder="Select organization" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="techcorp">TechCorp HQ</SelectItem>
-                        <SelectItem value="metro-university">Metro University</SelectItem>
-                        <SelectItem value="innovation-lab">Innovation Lab</SelectItem>
+                        {organizations.map(org => (
+                          <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -411,9 +503,30 @@ export default function UsersPage() {
         </Card>
       </div>
 
-      {/* Search and Filters */}
+      {/* View Toggle and Filters */}
       <Card>
         <CardContent className="pt-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-2">
+              <Button
+                variant={viewMode === "organization" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setViewMode("organization")}
+              >
+                <Building2 className="h-4 w-4 mr-2" />
+                By Organization
+              </Button>
+              <Button
+                variant={viewMode === "list" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setViewMode("list")}
+              >
+                <Users className="h-4 w-4 mr-2" />
+                List View
+              </Button>
+            </div>
+          </div>
+
           <div className="flex items-center space-x-4">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -435,215 +548,223 @@ export default function UsersPage() {
                 <SelectItem value="visitor">Visitors</SelectItem>
               </SelectContent>
             </Select>
+            {viewMode === "list" && (
+              <Select value={selectedOrganization} onValueChange={setSelectedOrganization}>
+                <SelectTrigger className="w-48">
+                  <SelectValue placeholder="Organization" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Organizations</SelectItem>
+                  {organizations.map(org => (
+                    <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      {/* Users Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Users ({filteredUsers.length})</CardTitle>
-          <CardDescription>Manage user accounts and permissions</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Organization</TableHead>
-                <TableHead>Department</TableHead>
-                <TableHead>Card Status</TableHead>
-                <TableHead>Devices</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Last Access</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredUsers.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>
-                    <div>
-                      <div className="font-medium">{user.firstName} {user.lastName}</div>
-                      <div className="text-sm text-muted-foreground">{user.email}</div>
-                      <div className="text-xs text-muted-foreground">ID: {user.employeeId}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell>{getCategoryBadge(user.category)}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <Building2 className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{user.organization}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>{user.department}</TableCell>
-                  <TableCell>
-                    <div>
-                      {getCardStatusBadge(user.cardStatus)}
-                      {user.cardNumber && (
-                        <div className="text-xs text-muted-foreground mt-1">{user.cardNumber}</div>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-1">
-                      <Radio className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">{user.assignedDevices.length}</span>
-                      {user.biometricEnabled && (
-                        <Shield className="h-3 w-3 text-green-600 ml-1" />
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>{getStatusBadge(user.status)}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{user.lastAccess}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setSelectedUser(user)}
-                          >
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-[600px]">
-                          <DialogHeader>
-                            <DialogTitle>Edit User: {selectedUser?.firstName} {selectedUser?.lastName}</DialogTitle>
-                            <DialogDescription>
-                              Update user information and device assignments.
-                            </DialogDescription>
-                          </DialogHeader>
-                          {selectedUser && (
-                            <Tabs defaultValue="profile" className="w-full">
-                              <TabsList className="grid w-full grid-cols-3">
-                                <TabsTrigger value="profile">Profile</TabsTrigger>
-                                <TabsTrigger value="devices">Devices</TabsTrigger>
-                                <TabsTrigger value="access">Access</TabsTrigger>
-                              </TabsList>
-                              <TabsContent value="profile" className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <Label htmlFor="edit-firstName">First Name</Label>
-                                    <Input id="edit-firstName" defaultValue={selectedUser.firstName} />
-                                  </div>
-                                  <div>
-                                    <Label htmlFor="edit-lastName">Last Name</Label>
-                                    <Input id="edit-lastName" defaultValue={selectedUser.lastName} />
-                                  </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <Label htmlFor="edit-email">Email</Label>
-                                    <Input id="edit-email" defaultValue={selectedUser.email} />
-                                  </div>
-                                  <div>
-                                    <Label htmlFor="edit-phone">Phone</Label>
-                                    <Input id="edit-phone" defaultValue={selectedUser.phone} />
-                                  </div>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                  <div>
-                                    <Label htmlFor="edit-category">Category</Label>
-                                    <Select defaultValue={selectedUser.category}>
-                                      <SelectTrigger>
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        <SelectItem value="staff">Staff</SelectItem>
-                                        <SelectItem value="customer">Customer</SelectItem>
-                                        <SelectItem value="visitor">Visitor</SelectItem>
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-                                  <div>
-                                    <Label htmlFor="edit-department">Department</Label>
-                                    <Input id="edit-department" defaultValue={selectedUser.department} />
-                                  </div>
-                                </div>
-                              </TabsContent>
-                              <TabsContent value="devices" className="space-y-4">
+      {/* Content based on view mode */}
+      {viewMode === "organization" ? (
+        // Organization-based view
+        <div className="space-y-6">
+          <Accordion type="multiple" className="w-full space-y-4">
+            {organizations.map((org) => {
+              const orgUsers = getUsersByOrganization(org.id).filter(user => {
+                const matchesSearch = 
+                  user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                  user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                  user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                  user.employeeId.toLowerCase().includes(searchTerm.toLowerCase());
+                const matchesCategory = selectedCategory === "all" || user.category === selectedCategory;
+                return matchesSearch && matchesCategory;
+              });
+
+              return (
+                <Card key={org.id}>
+                  <AccordionItem value={org.id} className="border-none">
+                    <AccordionTrigger className="px-6 py-4 hover:no-underline">
+                      <div className="flex items-center justify-between w-full mr-4">
+                        <div className="flex items-center space-x-4">
+                          <Building2 className="h-5 w-5 text-primary" />
+                          <div className="text-left">
+                            <h3 className="text-lg font-semibold">{org.name}</h3>
+                            <p className="text-sm text-muted-foreground">
+                              {orgUsers.length} users ({org.activeUsers} active)
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-4 text-sm">
+                          <div className="text-center">
+                            <div className="font-semibold text-blue-600">{orgUsers.filter(u => u.category === 'staff').length}</div>
+                            <div className="text-muted-foreground">Staff</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="font-semibold text-purple-600">{orgUsers.filter(u => u.category === 'customer').length}</div>
+                            <div className="text-muted-foreground">Customers</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="font-semibold text-orange-600">{orgUsers.filter(u => u.category === 'visitor').length}</div>
+                            <div className="text-muted-foreground">Visitors</div>
+                          </div>
+                        </div>
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-6 pb-4">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>User</TableHead>
+                            <TableHead>Category</TableHead>
+                            <TableHead>Department</TableHead>
+                            <TableHead>Card Status</TableHead>
+                            <TableHead>Devices</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Last Access</TableHead>
+                            <TableHead>Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {orgUsers.map((user) => (
+                            <TableRow key={user.id}>
+                              <TableCell>
                                 <div>
-                                  <Label>Assigned Devices</Label>
-                                  <div className="space-y-2 mt-2">
-                                    {selectedUser.assignedDevices.map(deviceId => (
-                                      <div key={deviceId} className="flex items-center justify-between p-2 border rounded">
-                                        <span>{deviceId}</span>
-                                        <Button variant="outline" size="sm">Remove</Button>
-                                      </div>
-                                    ))}
-                                  </div>
+                                  <div className="font-medium">{user.firstName} {user.lastName}</div>
+                                  <div className="text-sm text-muted-foreground">{user.email}</div>
+                                  <div className="text-xs text-muted-foreground">ID: {user.employeeId}</div>
                                 </div>
+                              </TableCell>
+                              <TableCell>{getCategoryBadge(user.category)}</TableCell>
+                              <TableCell>{user.department}</TableCell>
+                              <TableCell>
                                 <div>
-                                  <Label>Add New Device</Label>
-                                  <Select>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select device" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="dev-001">DEV-001 - Main Entrance</SelectItem>
-                                      <SelectItem value="dev-002">DEV-002 - Lab Access</SelectItem>
-                                    </SelectContent>
-                                  </Select>
+                                  {getCardStatusBadge(user.cardStatus)}
+                                  {user.cardNumber && (
+                                    <div className="text-xs text-muted-foreground mt-1">{user.cardNumber}</div>
+                                  )}
                                 </div>
-                              </TabsContent>
-                              <TabsContent value="access" className="space-y-4">
+                              </TableCell>
+                              <TableCell>
+                                <div className="flex items-center space-x-1">
+                                  <Radio className="h-4 w-4 text-muted-foreground" />
+                                  <span className="text-sm">{user.assignedDevices.length}</span>
+                                  {user.biometricEnabled && (
+                                    <Shield className="h-3 w-3 text-green-600 ml-1" />
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell>{getStatusBadge(user.status)}</TableCell>
+                              <TableCell className="text-sm text-muted-foreground">{user.lastAccess}</TableCell>
+                              <TableCell>
                                 <div className="flex items-center space-x-2">
-                                  <input 
-                                    type="checkbox" 
-                                    id="biometric" 
-                                    defaultChecked={selectedUser.biometricEnabled}
-                                    className="rounded" 
-                                  />
-                                  <Label htmlFor="biometric">Enable Biometric Authentication</Label>
+                                  <Button variant="outline" size="sm">
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  {user.status === "active" ? (
+                                    <Button variant="outline" size="sm" className="text-red-600">
+                                      <UserX className="h-4 w-4" />
+                                    </Button>
+                                  ) : (
+                                    <Button variant="outline" size="sm" className="text-green-600">
+                                      <UserCheck className="h-4 w-4" />
+                                    </Button>
+                                  )}
                                 </div>
-                                <div>
-                                  <Label htmlFor="card-number">Card Number</Label>
-                                  <Input id="card-number" defaultValue={selectedUser.cardNumber} />
-                                </div>
-                                <div>
-                                  <Label htmlFor="card-status">Card Status</Label>
-                                  <Select defaultValue={selectedUser.cardStatus}>
-                                    <SelectTrigger>
-                                      <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="active">Active</SelectItem>
-                                      <SelectItem value="inactive">Inactive</SelectItem>
-                                      <SelectItem value="lost">Lost</SelectItem>
-                                      <SelectItem value="expired">Expired</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                              </TabsContent>
-                            </Tabs>
-                          )}
-                          <DialogFooter>
-                            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
-                            <Button onClick={() => setIsEditDialogOpen(false)}>Save Changes</Button>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
-                      
-                      {user.status === "active" ? (
-                        <Button variant="outline" size="sm" className="text-red-600">
-                          <UserX className="h-4 w-4" />
-                        </Button>
-                      ) : (
-                        <Button variant="outline" size="sm" className="text-green-600">
-                          <UserCheck className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </TableCell>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Card>
+              );
+            })}
+          </Accordion>
+        </div>
+      ) : (
+        // List view
+        <Card>
+          <CardHeader>
+            <CardTitle>All Users ({filteredUsers.length})</CardTitle>
+            <CardDescription>Complete list of users across all organizations</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead>Organization</TableHead>
+                  <TableHead>Department</TableHead>
+                  <TableHead>Card Status</TableHead>
+                  <TableHead>Devices</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Last Access</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              </TableHeader>
+              <TableBody>
+                {filteredUsers.map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell>
+                      <div>
+                        <div className="font-medium">{user.firstName} {user.lastName}</div>
+                        <div className="text-sm text-muted-foreground">{user.email}</div>
+                        <div className="text-xs text-muted-foreground">ID: {user.employeeId}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>{getCategoryBadge(user.category)}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <Building2 className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">{user.organization}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>{user.department}</TableCell>
+                    <TableCell>
+                      <div>
+                        {getCardStatusBadge(user.cardStatus)}
+                        {user.cardNumber && (
+                          <div className="text-xs text-muted-foreground mt-1">{user.cardNumber}</div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-1">
+                        <Radio className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm">{user.assignedDevices.length}</span>
+                        {user.biometricEnabled && (
+                          <Shield className="h-3 w-3 text-green-600 ml-1" />
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>{getStatusBadge(user.status)}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{user.lastAccess}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <Button variant="outline" size="sm">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        {user.status === "active" ? (
+                          <Button variant="outline" size="sm" className="text-red-600">
+                            <UserX className="h-4 w-4" />
+                          </Button>
+                        ) : (
+                          <Button variant="outline" size="sm" className="text-green-600">
+                            <UserCheck className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
