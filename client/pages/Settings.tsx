@@ -906,6 +906,479 @@ export default function SettingsPage() {
           </div>
         </TabsContent>
 
+        <TabsContent value="integrations" className="space-y-6">
+          {/* 3rd Party Integrations */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Google Email API Configuration</CardTitle>
+                <CardDescription>Configure Google Gmail API for email notifications</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="gmail-enabled">Enable Gmail API</Label>
+                    <p className="text-sm text-muted-foreground">Use Gmail API for sending emails</p>
+                  </div>
+                  <Switch id="gmail-enabled" />
+                </div>
+                <div>
+                  <Label htmlFor="gmail-client-id">Google Client ID</Label>
+                  <Input id="gmail-client-id" type="password" placeholder="••••••••.apps.googleusercontent.com" />
+                </div>
+                <div>
+                  <Label htmlFor="gmail-client-secret">Google Client Secret</Label>
+                  <Input id="gmail-client-secret" type="password" placeholder="••••••••••••••••••••••••" />
+                </div>
+                <div>
+                  <Label htmlFor="gmail-redirect-uri">Redirect URI</Label>
+                  <Input id="gmail-redirect-uri" defaultValue="https://yourdomain.com/auth/gmail/callback" />
+                </div>
+                <div>
+                  <Label htmlFor="gmail-scopes">API Scopes</Label>
+                  <Textarea
+                    id="gmail-scopes"
+                    defaultValue="https://www.googleapis.com/auth/gmail.send&#10;https://www.googleapis.com/auth/gmail.readonly"
+                    className="min-h-20"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="gmail-sender-email">Default Sender Email</Label>
+                  <Input id="gmail-sender-email" type="email" placeholder="noreply@yourdomain.com" />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="gmail-batch-send">Enable Batch Sending</Label>
+                    <p className="text-sm text-muted-foreground">Send multiple emails in batches</p>
+                  </div>
+                  <Switch id="gmail-batch-send" defaultChecked />
+                </div>
+                <div>
+                  <Label htmlFor="gmail-rate-limit">Rate Limit (emails/minute)</Label>
+                  <Input id="gmail-rate-limit" type="number" defaultValue="100" />
+                </div>
+                <div className="space-y-2">
+                  <Button variant="outline" className="w-full">
+                    <Key className="h-4 w-4 mr-2" />
+                    Test Gmail Connection
+                  </Button>
+                  <Button className="w-full">
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Gmail Configuration
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>WhatsApp Business API Status</CardTitle>
+                <CardDescription>Current WhatsApp API integration status</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="p-4 border rounded-lg bg-muted/50">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-medium">API Status</span>
+                    <Badge className="bg-green-100 text-green-800 border-green-200">
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Connected
+                    </Badge>
+                  </div>
+                  <div className="text-sm text-muted-foreground space-y-1">
+                    <p>Phone Number: +1 555-123-4567</p>
+                    <p>Business Account: RFID Solutions Inc.</p>
+                    <p>API Version: v18.0</p>
+                    <p>Last Sync: 2 minutes ago</p>
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h4 className="font-medium">Message Templates</h4>
+                  <div className="space-y-2">
+                    {[
+                      { name: "Welcome Message", status: "approved", lang: "en" },
+                      { name: "Access Alert", status: "approved", lang: "en" },
+                      { name: "Device Offline Alert", status: "pending", lang: "en" },
+                      { name: "Card Expiry Notice", status: "rejected", lang: "en" }
+                    ].map((template) => (
+                      <div key={template.name} className="flex items-center justify-between p-2 border rounded">
+                        <div>
+                          <span className="text-sm font-medium">{template.name}</span>
+                          <span className="text-xs text-muted-foreground ml-2">({template.lang})</span>
+                        </div>
+                        <Badge
+                          className={
+                            template.status === "approved"
+                              ? "bg-green-100 text-green-800 border-green-200"
+                              : template.status === "pending"
+                              ? "bg-yellow-100 text-yellow-800 border-yellow-200"
+                              : "bg-red-100 text-red-800 border-red-200"
+                          }
+                        >
+                          {template.status}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h4 className="font-medium">Usage Statistics</h4>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="text-center p-2 border rounded">
+                      <div className="font-semibold text-blue-600">1,247</div>
+                      <div className="text-muted-foreground">Messages Sent</div>
+                    </div>
+                    <div className="text-center p-2 border rounded">
+                      <div className="font-semibold text-green-600">98.5%</div>
+                      <div className="text-muted-foreground">Delivery Rate</div>
+                    </div>
+                  </div>
+                </div>
+
+                <Button variant="outline" className="w-full">
+                  <Settings className="h-4 w-4 mr-2" />
+                  Manage WhatsApp Settings
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>SMS Provider Configuration</CardTitle>
+                <CardDescription>Configure SMS service provider</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="sms-provider">SMS Provider</Label>
+                  <Select defaultValue="twilio">
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="twilio">Twilio</SelectItem>
+                      <SelectItem value="nexmo">Vonage (Nexmo)</SelectItem>
+                      <SelectItem value="aws-sns">AWS SNS</SelectItem>
+                      <SelectItem value="messagebird">MessageBird</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="sms-account-sid">Account SID</Label>
+                  <Input id="sms-account-sid" type="password" placeholder="••••••••••••••••••••••••••••••••••••" />
+                </div>
+                <div>
+                  <Label htmlFor="sms-auth-token">Auth Token</Label>
+                  <Input id="sms-auth-token" type="password" placeholder="••••••••••••••••••••••••••••••••••••" />
+                </div>
+                <div>
+                  <Label htmlFor="sms-from-number">From Phone Number</Label>
+                  <Input id="sms-from-number" placeholder="+1 555-000-0000" />
+                </div>
+                <div>
+                  <Label htmlFor="sms-webhook-url">Webhook URL (Optional)</Label>
+                  <Input id="sms-webhook-url" placeholder="https://yourdomain.com/webhooks/sms" />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="sms-delivery-reports">Enable Delivery Reports</Label>
+                    <p className="text-sm text-muted-foreground">Track message delivery status</p>
+                  </div>
+                  <Switch id="sms-delivery-reports" defaultChecked />
+                </div>
+                <div className="space-y-2">
+                  <Button variant="outline" className="w-full">
+                    <Phone className="h-4 w-4 mr-2" />
+                    Test SMS Connection
+                  </Button>
+                  <Button className="w-full">
+                    <Save className="h-4 w-4 mr-2" />
+                    Save SMS Configuration
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Integration Webhooks</CardTitle>
+                <CardDescription>Configure webhooks for external integrations</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="webhook-user-created">User Created Webhook</Label>
+                  <Input id="webhook-user-created" placeholder="https://yourdomain.com/webhooks/user-created" />
+                </div>
+                <div>
+                  <Label htmlFor="webhook-access-event">Access Event Webhook</Label>
+                  <Input id="webhook-access-event" placeholder="https://yourdomain.com/webhooks/access-event" />
+                </div>
+                <div>
+                  <Label htmlFor="webhook-device-status">Device Status Webhook</Label>
+                  <Input id="webhook-device-status" placeholder="https://yourdomain.com/webhooks/device-status" />
+                </div>
+                <div>
+                  <Label htmlFor="webhook-secret">Webhook Secret</Label>
+                  <Input id="webhook-secret" type="password" placeholder="••••••••••••••••••••••••" />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="webhook-retry">Enable Retry on Failure</Label>
+                    <p className="text-sm text-muted-foreground">Retry failed webhook calls</p>
+                  </div>
+                  <Switch id="webhook-retry" defaultChecked />
+                </div>
+                <Button className="w-full">
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Webhook Configuration
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="whatsapp" className="space-y-6">
+          {/* WhatsApp API Configuration */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>WhatsApp Business API Setup</CardTitle>
+                <CardDescription>Configure WhatsApp Business API for messaging</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label htmlFor="whatsapp-enabled">Enable WhatsApp API</Label>
+                    <p className="text-sm text-muted-foreground">Activate WhatsApp Business messaging</p>
+                  </div>
+                  <Switch id="whatsapp-enabled" defaultChecked />
+                </div>
+                <div>
+                  <Label htmlFor="whatsapp-app-id">App ID</Label>
+                  <Input id="whatsapp-app-id" type="password" placeholder="••••••••••••••••••••••••" />
+                </div>
+                <div>
+                  <Label htmlFor="whatsapp-app-secret">App Secret</Label>
+                  <Input id="whatsapp-app-secret" type="password" placeholder="••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••" />
+                </div>
+                <div>
+                  <Label htmlFor="whatsapp-access-token">Access Token</Label>
+                  <Input id="whatsapp-access-token" type="password" placeholder="••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••" />
+                </div>
+                <div>
+                  <Label htmlFor="whatsapp-phone-id">Phone Number ID</Label>
+                  <Input id="whatsapp-phone-id" placeholder="123456789012345" />
+                </div>
+                <div>
+                  <Label htmlFor="whatsapp-business-id">WhatsApp Business Account ID</Label>
+                  <Input id="whatsapp-business-id" placeholder="987654321098765" />
+                </div>
+                <div>
+                  <Label htmlFor="whatsapp-webhook-url">Webhook URL</Label>
+                  <Input id="whatsapp-webhook-url" defaultValue="https://yourdomain.com/webhooks/whatsapp" />
+                </div>
+                <div>
+                  <Label htmlFor="whatsapp-verify-token">Webhook Verify Token</Label>
+                  <Input id="whatsapp-verify-token" type="password" placeholder="••••••••••••••••••••••••" />
+                </div>
+                <Button className="w-full">
+                  <Save className="h-4 w-4 mr-2" />
+                  Save WhatsApp Configuration
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Message Templates Management</CardTitle>
+                <CardDescription>Manage WhatsApp Business message templates</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium">Template Approval Status</h4>
+                  <Button size="sm" variant="outline">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Template
+                  </Button>
+                </div>
+
+                <div className="space-y-3">
+                  {[
+                    {
+                      name: "welcome_message",
+                      status: "APPROVED",
+                      category: "UTILITY",
+                      language: "en",
+                      lastModified: "2024-01-10"
+                    },
+                    {
+                      name: "access_alert",
+                      status: "APPROVED",
+                      category: "UTILITY",
+                      language: "en",
+                      lastModified: "2024-01-08"
+                    },
+                    {
+                      name: "device_offline",
+                      status: "PENDING",
+                      category: "UTILITY",
+                      language: "en",
+                      lastModified: "2024-01-12"
+                    },
+                    {
+                      name: "card_expiry",
+                      status: "REJECTED",
+                      category: "MARKETING",
+                      language: "en",
+                      lastModified: "2024-01-05"
+                    }
+                  ].map((template) => (
+                    <div key={template.name} className="p-3 border rounded-lg">
+                      <div className="flex items-center justify-between mb-2">
+                        <div>
+                          <span className="font-medium">{template.name}</span>
+                          <Badge
+                            className={`ml-2 ${
+                              template.status === "APPROVED"
+                                ? "bg-green-100 text-green-800 border-green-200"
+                                : template.status === "PENDING"
+                                ? "bg-yellow-100 text-yellow-800 border-yellow-200"
+                                : "bg-red-100 text-red-800 border-red-200"
+                            }`}
+                          >
+                            {template.status}
+                          </Badge>
+                        </div>
+                        <Button variant="outline" size="sm">
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        <p>Category: {template.category}</p>
+                        <p>Language: {template.language}</p>
+                        <p>Last Modified: {template.lastModified}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <Button variant="outline" className="w-full">
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Refresh Template Status
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>WhatsApp Analytics</CardTitle>
+                <CardDescription>Message delivery and engagement analytics</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center p-3 border rounded">
+                    <div className="text-2xl font-bold text-blue-600">1,247</div>
+                    <div className="text-sm text-muted-foreground">Messages Sent</div>
+                    <div className="text-xs text-green-600">↑ 12% from last week</div>
+                  </div>
+                  <div className="text-center p-3 border rounded">
+                    <div className="text-2xl font-bold text-green-600">98.5%</div>
+                    <div className="text-sm text-muted-foreground">Delivery Rate</div>
+                    <div className="text-xs text-green-600">↑ 2% from last week</div>
+                  </div>
+                  <div className="text-center p-3 border rounded">
+                    <div className="text-2xl font-bold text-purple-600">847</div>
+                    <div className="text-sm text-muted-foreground">Messages Read</div>
+                    <div className="text-xs text-green-600">↑ 8% from last week</div>
+                  </div>
+                  <div className="text-center p-3 border rounded">
+                    <div className="text-2xl font-bold text-orange-600">15</div>
+                    <div className="text-sm text-muted-foreground">Failed Sends</div>
+                    <div className="text-xs text-red-600">↓ 5% from last week</div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-medium mb-2">Recent Activity</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between p-2 bg-muted/50 rounded">
+                      <span>Welcome message sent to new user</span>
+                      <span className="text-muted-foreground">2 min ago</span>
+                    </div>
+                    <div className="flex justify-between p-2 bg-muted/50 rounded">
+                      <span>Access alert delivered successfully</span>
+                      <span className="text-muted-foreground">5 min ago</span>
+                    </div>
+                    <div className="flex justify-between p-2 bg-muted/50 rounded">
+                      <span>Device offline notification sent</span>
+                      <span className="text-muted-foreground">15 min ago</span>
+                    </div>
+                  </div>
+                </div>
+
+                <Button variant="outline" className="w-full">
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  View Detailed Analytics
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>WhatsApp Testing & Validation</CardTitle>
+                <CardDescription>Test your WhatsApp integration</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="test-phone">Test Phone Number</Label>
+                  <Input id="test-phone" placeholder="+1 555-123-4567" />
+                </div>
+                <div>
+                  <Label htmlFor="test-template">Template to Test</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select template" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="welcome_message">Welcome Message</SelectItem>
+                      <SelectItem value="access_alert">Access Alert</SelectItem>
+                      <SelectItem value="device_offline">Device Offline</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="test-variables">Template Variables (JSON)</Label>
+                  <Textarea
+                    id="test-variables"
+                    placeholder='{"user_name": "John Doe", "organization": "TechCorp"}'
+                    className="min-h-20"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Button variant="outline" className="w-full">
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Validate Configuration
+                  </Button>
+                  <Button className="w-full">
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Send Test Message
+                  </Button>
+                </div>
+
+                <div className="p-3 border rounded-lg bg-green-50">
+                  <div className="flex items-center space-x-2">
+                    <CheckCircle className="h-4 w-4 text-green-600" />
+                    <span className="text-sm font-medium text-green-800">Configuration Valid</span>
+                  </div>
+                  <p className="text-sm text-green-700 mt-1">
+                    WhatsApp API is properly configured and ready to send messages.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
         <TabsContent value="audit" className="space-y-6">
           {/* Audit Logs */}
           <Card>
