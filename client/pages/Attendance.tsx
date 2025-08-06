@@ -32,6 +32,12 @@ import {
 import { Calendar } from "../components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover";
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "../components/ui/accordion";
+import {
   Clock,
   Calendar as CalendarIcon,
   Download,
@@ -48,9 +54,11 @@ import {
   CheckCircle,
   XCircle,
   AlertTriangle,
-  Timer
+  Timer,
+  Eye,
+  Edit
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 
 interface AttendanceRecord {
   id: string;
@@ -59,6 +67,7 @@ interface AttendanceRecord {
   userEmail: string;
   employeeId: string;
   organization: string;
+  organizationId: string;
   department: string;
   date: string;
   punchIn: string | null;
@@ -70,9 +79,9 @@ interface AttendanceRecord {
   notes?: string;
 }
 
-interface AttendanceSummary {
-  organizationId: string;
-  organizationName: string;
+interface Organization {
+  id: string;
+  name: string;
   totalEmployees: number;
   presentToday: number;
   absentToday: number;
@@ -82,12 +91,47 @@ interface AttendanceSummary {
 }
 
 export default function Attendance() {
-  const [activeTab, setActiveTab] = useState("daily");
+  const [activeTab, setActiveTab] = useState("organizations");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedOrg, setSelectedOrg] = useState("all");
+  const [selectedOrganization, setSelectedOrganization] = useState("all");
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [dateRange, setDateRange] = useState({ from: new Date(), to: new Date() });
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState<AttendanceRecord | null>(null);
+
+  const organizations: Organization[] = [
+    {
+      id: "ORG-001",
+      name: "TechCorp HQ",
+      totalEmployees: 345,
+      presentToday: 298,
+      absentToday: 32,
+      lateToday: 15,
+      averageHours: 8.2,
+      monthlyTrend: "up"
+    },
+    {
+      id: "ORG-002",
+      name: "Metro University",
+      totalEmployees: 1847,
+      presentToday: 1634,
+      absentToday: 156,
+      lateToday: 57,
+      averageHours: 7.8,
+      monthlyTrend: "stable"
+    },
+    {
+      id: "ORG-003",
+      name: "Innovation Lab",
+      totalEmployees: 89,
+      presentToday: 76,
+      absentToday: 8,
+      lateToday: 5,
+      averageHours: 8.5,
+      monthlyTrend: "down"
+    }
+  ];
 
   const attendanceRecords: AttendanceRecord[] = [
     {
@@ -97,6 +141,7 @@ export default function Attendance() {
       userEmail: "john.smith@techcorp.com",
       employeeId: "TC001",
       organization: "TechCorp HQ",
+      organizationId: "ORG-001",
       department: "Engineering",
       date: "2024-01-15",
       punchIn: "08:30:00",
@@ -113,6 +158,7 @@ export default function Attendance() {
       userEmail: "s.johnson@metrouniv.edu",
       employeeId: "MU002",
       organization: "Metro University",
+      organizationId: "ORG-002",
       department: "Library",
       date: "2024-01-15",
       punchIn: "09:15:00",
@@ -129,6 +175,7 @@ export default function Attendance() {
       userEmail: "m.chen@student.metrouniv.edu",
       employeeId: "ST003",
       organization: "Metro University",
+      organizationId: "ORG-002",
       department: "Computer Science",
       date: "2024-01-15",
       punchIn: "10:00:00",
@@ -146,6 +193,7 @@ export default function Attendance() {
       userEmail: "emily.r@innovationlab.com",
       employeeId: "IL004",
       organization: "Innovation Lab",
+      organizationId: "ORG-003",
       department: "R&D",
       date: "2024-01-15",
       punchIn: null,
@@ -162,6 +210,7 @@ export default function Attendance() {
       userEmail: "d.wilson@visitor.com",
       employeeId: "VIS005",
       organization: "TechCorp HQ",
+      organizationId: "ORG-001",
       department: "Visitor",
       date: "2024-01-15",
       punchIn: "14:30:00",
@@ -170,41 +219,29 @@ export default function Attendance() {
       status: "present",
       deviceUsed: "DEV-001",
       cardNumber: "CARD-007890"
+    },
+    {
+      id: "ATT-006",
+      userId: "USR-006",
+      userName: "Lisa Wang",
+      userEmail: "l.wang@techcorp.com",
+      employeeId: "TC002",
+      organization: "TechCorp HQ",
+      organizationId: "ORG-001",
+      department: "HR",
+      date: "2024-01-15",
+      punchIn: "08:45:00",
+      punchOut: "17:30:00",
+      totalHours: 8.75,
+      status: "present",
+      deviceUsed: "DEV-001",
+      cardNumber: "CARD-001235"
     }
   ];
 
-  const attendanceSummary: AttendanceSummary[] = [
-    {
-      organizationId: "ORG-001",
-      organizationName: "TechCorp HQ",
-      totalEmployees: 345,
-      presentToday: 298,
-      absentToday: 32,
-      lateToday: 15,
-      averageHours: 8.2,
-      monthlyTrend: "up"
-    },
-    {
-      organizationId: "ORG-002",
-      organizationName: "Metro University",
-      totalEmployees: 1847,
-      presentToday: 1634,
-      absentToday: 156,
-      lateToday: 57,
-      averageHours: 7.8,
-      monthlyTrend: "stable"
-    },
-    {
-      organizationId: "ORG-003",
-      organizationName: "Innovation Lab",
-      totalEmployees: 89,
-      presentToday: 76,
-      absentToday: 8,
-      lateToday: 5,
-      averageHours: 8.5,
-      monthlyTrend: "down"
-    }
-  ];
+  const getRecordsByOrganization = (orgId: string) => {
+    return attendanceRecords.filter(record => record.organizationId === orgId);
+  };
 
   const filteredRecords = attendanceRecords.filter(record => {
     const matchesSearch = 
@@ -212,7 +249,7 @@ export default function Attendance() {
       record.employeeId.toLowerCase().includes(searchTerm.toLowerCase()) ||
       record.userEmail.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesOrg = selectedOrg === "all" || record.organization === selectedOrg;
+    const matchesOrg = selectedOrganization === "all" || record.organizationId === selectedOrganization;
     
     return matchesSearch && matchesOrg;
   });
@@ -276,10 +313,10 @@ export default function Attendance() {
   };
 
   const totalStats = {
-    totalEmployees: attendanceSummary.reduce((sum, org) => sum + org.totalEmployees, 0),
-    totalPresent: attendanceSummary.reduce((sum, org) => sum + org.presentToday, 0),
-    totalAbsent: attendanceSummary.reduce((sum, org) => sum + org.absentToday, 0),
-    totalLate: attendanceSummary.reduce((sum, org) => sum + org.lateToday, 0)
+    totalEmployees: organizations.reduce((sum, org) => sum + org.totalEmployees, 0),
+    totalPresent: organizations.reduce((sum, org) => sum + org.presentToday, 0),
+    totalAbsent: organizations.reduce((sum, org) => sum + org.absentToday, 0),
+    totalLate: organizations.reduce((sum, org) => sum + org.lateToday, 0)
   };
 
   return (
@@ -289,7 +326,7 @@ export default function Attendance() {
         <div>
           <h1 className="text-3xl font-bold text-foreground">Attendance Management</h1>
           <p className="text-muted-foreground mt-1">
-            Track punch in/out records and generate attendance reports
+            Track attendance across organizations with punch in/out records and date filtering
           </p>
         </div>
         <div className="flex space-x-3">
@@ -334,9 +371,9 @@ export default function Attendance() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Organizations</SelectItem>
-                      <SelectItem value="techcorp">TechCorp HQ</SelectItem>
-                      <SelectItem value="metro-university">Metro University</SelectItem>
-                      <SelectItem value="innovation-lab">Innovation Lab</SelectItem>
+                      {organizations.map(org => (
+                        <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -446,15 +483,243 @@ export default function Attendance() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="daily">Daily View</TabsTrigger>
-          <TabsTrigger value="weekly">Weekly View</TabsTrigger>
-          <TabsTrigger value="monthly">Monthly View</TabsTrigger>
-          <TabsTrigger value="summary">Organization Summary</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="organizations">By Organization</TabsTrigger>
+          <TabsTrigger value="daily">Daily Records</TabsTrigger>
+          <TabsTrigger value="reports">Reports & Analytics</TabsTrigger>
         </TabsList>
 
+        <TabsContent value="organizations" className="space-y-6">
+          {/* Organization-based attendance view */}
+          <div className="space-y-4">
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center space-x-4">
+                  <div>
+                    <Label>Select Date</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" className="justify-start text-left font-normal">
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {isValid(selectedDate) ? format(selectedDate, "PPP") : "Select date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={selectedDate}
+                          onSelect={(date) => date && setSelectedDate(date)}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                    <Input
+                      placeholder="Search users by name or employee ID..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Accordion type="multiple" className="w-full space-y-4">
+              {organizations.map((org) => {
+                const orgRecords = getRecordsByOrganization(org.id).filter(record => {
+                  const matchesSearch = 
+                    record.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    record.employeeId.toLowerCase().includes(searchTerm.toLowerCase());
+                  return matchesSearch;
+                });
+
+                return (
+                  <Card key={org.id}>
+                    <AccordionItem value={org.id} className="border-none">
+                      <AccordionTrigger className="px-6 py-4 hover:no-underline">
+                        <div className="flex items-center justify-between w-full mr-4">
+                          <div className="flex items-center space-x-4">
+                            <Building2 className="h-5 w-5 text-primary" />
+                            <div className="text-left">
+                              <h3 className="text-lg font-semibold">{org.name}</h3>
+                              <p className="text-sm text-muted-foreground">
+                                {org.presentToday}/{org.totalEmployees} present today
+                              </p>
+                            </div>
+                            {getTrendIcon(org.monthlyTrend)}
+                          </div>
+                          <div className="flex items-center space-x-6 text-sm">
+                            <div className="text-center">
+                              <div className="text-2xl font-bold text-green-600">{org.presentToday}</div>
+                              <div className="text-muted-foreground">Present</div>
+                              <div className="text-xs text-green-600">
+                                {calculateAttendanceRate(org.presentToday, org.totalEmployees)}%
+                              </div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-2xl font-bold text-red-600">{org.absentToday}</div>
+                              <div className="text-muted-foreground">Absent</div>
+                              <div className="text-xs text-red-600">
+                                {calculateAttendanceRate(org.absentToday, org.totalEmployees)}%
+                              </div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-2xl font-bold text-yellow-600">{org.lateToday}</div>
+                              <div className="text-muted-foreground">Late</div>
+                              <div className="text-xs text-yellow-600">
+                                {calculateAttendanceRate(org.lateToday, org.totalEmployees)}%
+                              </div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-lg font-bold text-blue-600">{org.averageHours}h</div>
+                              <div className="text-muted-foreground">Avg Hours</div>
+                            </div>
+                          </div>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent className="px-6 pb-4">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Employee</TableHead>
+                              <TableHead>Department</TableHead>
+                              <TableHead>Punch In</TableHead>
+                              <TableHead>Punch Out</TableHead>
+                              <TableHead>Total Hours</TableHead>
+                              <TableHead>Status</TableHead>
+                              <TableHead>Device</TableHead>
+                              <TableHead>Actions</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {orgRecords.map((record) => (
+                              <TableRow key={record.id}>
+                                <TableCell>
+                                  <div>
+                                    <div className="font-medium flex items-center space-x-2">
+                                      <User className="h-4 w-4 text-muted-foreground" />
+                                      <span>{record.userName}</span>
+                                    </div>
+                                    <div className="text-sm text-muted-foreground">{record.userEmail}</div>
+                                    <div className="text-xs text-muted-foreground">ID: {record.employeeId}</div>
+                                  </div>
+                                </TableCell>
+                                <TableCell>{record.department}</TableCell>
+                                <TableCell>
+                                  <div className="font-mono text-sm">
+                                    {formatTime(record.punchIn)}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="font-mono text-sm">
+                                    {formatTime(record.punchOut)}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="font-medium">
+                                    {formatHours(record.totalHours)}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  {getStatusBadge(record.status)}
+                                </TableCell>
+                                <TableCell>
+                                  <div className="text-sm">
+                                    {record.deviceUsed || "N/A"}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center space-x-2">
+                                    <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                                      <DialogTrigger asChild>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() => setSelectedRecord(record)}
+                                        >
+                                          <Edit className="h-4 w-4" />
+                                        </Button>
+                                      </DialogTrigger>
+                                      <DialogContent>
+                                        <DialogHeader>
+                                          <DialogTitle>Edit Attendance Record</DialogTitle>
+                                          <DialogDescription>
+                                            Manually adjust attendance record for {selectedRecord?.userName}
+                                          </DialogDescription>
+                                        </DialogHeader>
+                                        {selectedRecord && (
+                                          <div className="grid gap-4 py-4">
+                                            <div className="grid grid-cols-2 gap-4">
+                                              <div>
+                                                <Label htmlFor="edit-punch-in">Punch In Time</Label>
+                                                <Input 
+                                                  id="edit-punch-in" 
+                                                  type="time" 
+                                                  defaultValue={selectedRecord.punchIn || ""} 
+                                                />
+                                              </div>
+                                              <div>
+                                                <Label htmlFor="edit-punch-out">Punch Out Time</Label>
+                                                <Input 
+                                                  id="edit-punch-out" 
+                                                  type="time" 
+                                                  defaultValue={selectedRecord.punchOut || ""} 
+                                                />
+                                              </div>
+                                            </div>
+                                            <div>
+                                              <Label htmlFor="edit-status">Status</Label>
+                                              <Select defaultValue={selectedRecord.status}>
+                                                <SelectTrigger>
+                                                  <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                  <SelectItem value="present">Present</SelectItem>
+                                                  <SelectItem value="absent">Absent</SelectItem>
+                                                  <SelectItem value="late">Late</SelectItem>
+                                                  <SelectItem value="partial">Partial</SelectItem>
+                                                </SelectContent>
+                                              </Select>
+                                            </div>
+                                            <div>
+                                              <Label htmlFor="edit-notes">Notes</Label>
+                                              <Input 
+                                                id="edit-notes" 
+                                                placeholder="Add notes about this attendance record"
+                                                defaultValue={selectedRecord.notes || ""}
+                                              />
+                                            </div>
+                                          </div>
+                                        )}
+                                        <DialogFooter>
+                                          <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+                                          <Button onClick={() => setIsEditDialogOpen(false)}>Save Changes</Button>
+                                        </DialogFooter>
+                                      </DialogContent>
+                                    </Dialog>
+                                    <Button variant="outline" size="sm">
+                                      <Eye className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Card>
+                );
+              })}
+            </Accordion>
+          </div>
+        </TabsContent>
+
         <TabsContent value="daily" className="space-y-6">
-          {/* Date Selector */}
+          {/* Daily Records Tab */}
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center space-x-4">
@@ -464,7 +729,7 @@ export default function Attendance() {
                     <PopoverTrigger asChild>
                       <Button variant="outline" className="justify-start text-left font-normal">
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {format(selectedDate, "PPP")}
+                        {isValid(selectedDate) ? format(selectedDate, "PPP") : "Select date"}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
@@ -486,26 +751,25 @@ export default function Attendance() {
                     className="pl-10"
                   />
                 </div>
-                <Select value={selectedOrg} onValueChange={setSelectedOrg}>
+                <Select value={selectedOrganization} onValueChange={setSelectedOrganization}>
                   <SelectTrigger className="w-48">
                     <SelectValue placeholder="Organization" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Organizations</SelectItem>
-                    <SelectItem value="TechCorp HQ">TechCorp HQ</SelectItem>
-                    <SelectItem value="Metro University">Metro University</SelectItem>
-                    <SelectItem value="Innovation Lab">Innovation Lab</SelectItem>
+                    {organizations.map(org => (
+                      <SelectItem key={org.id} value={org.id}>{org.name}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
             </CardContent>
           </Card>
 
-          {/* Daily Attendance Records */}
           <Card>
             <CardHeader>
               <CardTitle>Daily Attendance Records ({filteredRecords.length})</CardTitle>
-              <CardDescription>Punch in/out records for {format(selectedDate, "PPP")}</CardDescription>
+              <CardDescription>Complete attendance records for {isValid(selectedDate) ? format(selectedDate, "PPP") : "selected date"}</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -513,6 +777,7 @@ export default function Attendance() {
                   <TableRow>
                     <TableHead>Employee</TableHead>
                     <TableHead>Organization</TableHead>
+                    <TableHead>Department</TableHead>
                     <TableHead>Punch In</TableHead>
                     <TableHead>Punch Out</TableHead>
                     <TableHead>Total Hours</TableHead>
@@ -537,12 +802,10 @@ export default function Attendance() {
                       <TableCell>
                         <div className="flex items-center space-x-2">
                           <Building2 className="h-4 w-4 text-muted-foreground" />
-                          <div>
-                            <div className="text-sm">{record.organization}</div>
-                            <div className="text-xs text-muted-foreground">{record.department}</div>
-                          </div>
+                          <span className="text-sm">{record.organization}</span>
                         </div>
                       </TableCell>
+                      <TableCell>{record.department}</TableCell>
                       <TableCell>
                         <div className="font-mono text-sm">
                           {formatTime(record.punchIn)}
@@ -579,95 +842,20 @@ export default function Attendance() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="weekly" className="space-y-6">
+        <TabsContent value="reports" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Weekly Attendance Overview</CardTitle>
-              <CardDescription>Attendance patterns for the current week</CardDescription>
+              <CardTitle>Reports & Analytics</CardTitle>
+              <CardDescription>Generate comprehensive attendance reports and analytics</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="text-center py-12">
                 <BarChart3 className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">Weekly attendance charts and trends will be displayed here</p>
-                <p className="text-sm text-muted-foreground mt-2">Including daily attendance rates, late arrivals, and early departures</p>
+                <p className="text-muted-foreground">Advanced reporting and analytics features</p>
+                <p className="text-sm text-muted-foreground mt-2">Including attendance trends, productivity metrics, and custom reports</p>
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-
-        <TabsContent value="monthly" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Monthly Attendance Report</CardTitle>
-              <CardDescription>Comprehensive monthly attendance analysis</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-12">
-                <CalendarIcon className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">Monthly attendance calendar and statistics will be displayed here</p>
-                <p className="text-sm text-muted-foreground mt-2">Including attendance heatmaps, monthly totals, and performance metrics</p>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="summary" className="space-y-6">
-          {/* Organization Summary */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
-            {attendanceSummary.map((org) => (
-              <Card key={org.organizationId}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-lg">{org.organizationName}</CardTitle>
-                      <CardDescription>Today's Attendance Summary</CardDescription>
-                    </div>
-                    {getTrendIcon(org.monthlyTrend)}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-center p-3 border rounded">
-                      <div className="text-2xl font-bold text-green-600">{org.presentToday}</div>
-                      <p className="text-xs text-muted-foreground">Present</p>
-                      <p className="text-xs text-green-600">
-                        {calculateAttendanceRate(org.presentToday, org.totalEmployees)}%
-                      </p>
-                    </div>
-                    <div className="text-center p-3 border rounded">
-                      <div className="text-2xl font-bold text-red-600">{org.absentToday}</div>
-                      <p className="text-xs text-muted-foreground">Absent</p>
-                      <p className="text-xs text-red-600">
-                        {calculateAttendanceRate(org.absentToday, org.totalEmployees)}%
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Late Arrivals:</span>
-                      <span className="font-medium text-yellow-600">{org.lateToday}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Average Hours:</span>
-                      <span className="font-medium">{org.averageHours}h</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Total Employees:</span>
-                      <span className="font-medium">{org.totalEmployees}</span>
-                    </div>
-                  </div>
-
-                  <div className="pt-2">
-                    <Button variant="outline" size="sm" className="w-full">
-                      <FileText className="h-4 w-4 mr-2" />
-                      Generate Report
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
         </TabsContent>
       </Tabs>
     </div>
