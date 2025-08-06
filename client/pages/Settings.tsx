@@ -68,7 +68,11 @@ import {
   Monitor,
   HardDrive,
   Wifi,
-  Activity
+  Activity,
+  MessageSquare,
+  Phone,
+  BarChart3,
+  Mail
 } from "lucide-react";
 
 interface SystemUser {
