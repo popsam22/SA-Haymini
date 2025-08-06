@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -1070,7 +1069,7 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <Label htmlFor="sms-account-sid">Account SID</Label>
-                  <Input id="sms-account-sid" type="password" placeholder="••••••••••••••••••••••••••••••••••••" />
+                  <Input id="sms-account-sid" type="password" placeholder="•••••••••••••••••••••••���••••••••••••" />
                 </div>
                 <div>
                   <Label htmlFor="sms-auth-token">Auth Token</Label>
