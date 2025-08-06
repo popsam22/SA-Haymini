@@ -254,13 +254,11 @@ export default function SettingsPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-8">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="general">General</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
           <TabsTrigger value="users">User Management</TabsTrigger>
           <TabsTrigger value="backup">Backup & Recovery</TabsTrigger>
-          <TabsTrigger value="integrations">3rd Party APIs</TabsTrigger>
-          <TabsTrigger value="whatsapp">WhatsApp API</TabsTrigger>
           <TabsTrigger value="audit">Audit Logs</TabsTrigger>
           <TabsTrigger value="system">System Info</TabsTrigger>
         </TabsList>
