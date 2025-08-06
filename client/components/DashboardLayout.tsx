@@ -29,6 +29,7 @@ const navigation = [
   { name: "Cards", href: "/cards", icon: CreditCard },
   { name: "Device Control", href: "/device-control", icon: Power },
   { name: "Biometrics", href: "/biometrics", icon: Shield },
+  { name: "Attendance", href: "/attendance", icon: Clock },
   { name: "Notifications", href: "/notifications", icon: Bell },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
