@@ -13,17 +13,20 @@ import {
   CreditCard,
   Power,
   LogOut,
-  Clock
+  Clock,
+  User
 } from "lucide-react";
 import { Button } from "./ui/button";
+import { Badge } from "./ui/badge";
 import { cn } from "../lib/utils";
+import { useAuth } from "../contexts/AuthContext";
 
 interface DashboardLayoutProps {
   children: ReactNode;
 }
 
 const navigation = [
-  { name: "Dashboard", href: "/", icon: BarChart3 },
+  { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
   { name: "RFID Devices", href: "/devices", icon: Radio },
   { name: "Organizations", href: "/organizations", icon: Building2 },
   { name: "Users", href: "/users", icon: Users },
@@ -38,6 +41,11 @@ const navigation = [
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const { user, logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+  };
 
   return (
     <div className="h-screen bg-background">
@@ -84,9 +92,21 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             })}
           </nav>
           <div className="flex-shrink-0 border-t border-sidebar-border p-4">
+            <div className="mb-3 px-2">
+              <div className="flex items-center space-x-2 text-sm">
+                <User className="h-4 w-4 text-sidebar-foreground" />
+                <span className="text-sidebar-foreground font-medium">{user?.username}</span>
+              </div>
+              <div className="flex items-center space-x-2 mt-1">
+                <Badge variant="secondary" className="text-xs">
+                  {user?.role === 'super_admin' ? 'Super Admin' : 'Admin'}
+                </Badge>
+              </div>
+            </div>
             <Button
               variant="ghost"
               className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent"
+              onClick={handleLogout}
             >
               <LogOut className="mr-3 h-5 w-5" />
               Sign out
@@ -125,9 +145,21 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             })}
           </nav>
           <div className="flex-shrink-0 border-t border-sidebar-border p-4">
+            <div className="mb-3 px-2">
+              <div className="flex items-center space-x-2 text-sm">
+                <User className="h-4 w-4 text-sidebar-foreground" />
+                <span className="text-sidebar-foreground font-medium">{user?.username}</span>
+              </div>
+              <div className="flex items-center space-x-2 mt-1">
+                <Badge variant="secondary" className="text-xs">
+                  {user?.role === 'super_admin' ? 'Super Admin' : 'Admin'}
+                </Badge>
+              </div>
+            </div>
             <Button
               variant="ghost"
               className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent"
+              onClick={handleLogout}
             >
               <LogOut className="mr-3 h-5 w-5" />
               Sign out

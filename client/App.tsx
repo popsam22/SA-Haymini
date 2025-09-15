@@ -56,8 +56,12 @@ declare global {
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import { DashboardLayout } from "./components/DashboardLayout";
+import { LoginForm } from "./components/LoginForm";
+import { RootRedirect } from "./components/RootRedirect";
 import Dashboard from "./pages/Dashboard";
 import Devices from "./pages/Devices";
 import Organizations from "./pages/Organizations";
@@ -74,28 +78,119 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <DashboardLayout>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/devices" element={<Devices />} />
-            <Route path="/organizations" element={<Organizations />} />
-            <Route path="/users" element={<UsersPage />} />
-            <Route path="/cards" element={<Cards />} />
-            <Route path="/device-control" element={<DeviceControl />} />
-            <Route path="/biometrics" element={<Biometrics />} />
-            <Route path="/attendance" element={<Attendance />} />
-            <Route path="/notifications" element={<Notifications />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="/" element={<RootRedirect />} />
+            <Route path="/login" element={<LoginForm />} />
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute requiredRole="super_admin">
+                  <DashboardLayout>
+                    <Dashboard />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/devices"
+              element={
+                <ProtectedRoute requiredRole="super_admin">
+                  <DashboardLayout>
+                    <Devices />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/organizations"
+              element={
+                <ProtectedRoute requiredRole="super_admin">
+                  <DashboardLayout>
+                    <Organizations />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/users"
+              element={
+                <ProtectedRoute requiredRole="super_admin">
+                  <DashboardLayout>
+                    <UsersPage />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/cards"
+              element={
+                <ProtectedRoute requiredRole="super_admin">
+                  <DashboardLayout>
+                    <Cards />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/device-control"
+              element={
+                <ProtectedRoute requiredRole="super_admin">
+                  <DashboardLayout>
+                    <DeviceControl />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/biometrics"
+              element={
+                <ProtectedRoute requiredRole="super_admin">
+                  <DashboardLayout>
+                    <Biometrics />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/attendance"
+              element={
+                <ProtectedRoute requiredRole="super_admin">
+                  <DashboardLayout>
+                    <Attendance />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/notifications"
+              element={
+                <ProtectedRoute requiredRole="super_admin">
+                  <DashboardLayout>
+                    <Notifications />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute requiredRole="super_admin">
+                  <DashboardLayout>
+                    <SettingsPage />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </DashboardLayout>
-      </BrowserRouter>
-    </TooltipProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
