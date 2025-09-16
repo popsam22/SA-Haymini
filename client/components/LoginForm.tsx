@@ -9,7 +9,8 @@ import { Alert, AlertDescription } from "./ui/alert";
 import { Radio, Loader2, AlertTriangle } from "lucide-react";
 
 export function LoginForm() {
-  const { login, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { login, isAuthenticated, isLoading: authLoading, logout, user } = useAuth();
+
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,10 +18,15 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (isAuthenticated && !authLoading) {
+    if (isAuthenticated && !authLoading && user) {
       navigate("/dashboard", { replace: true });
     }
-  }, [isAuthenticated, authLoading, navigate]);
+  }, [isAuthenticated, authLoading, user, navigate]);
+
+  const handleClearSession = () => {
+    logout();
+    setError("");
+  };
 
   if (authLoading) {
     return (
@@ -107,6 +113,25 @@ export function LoginForm() {
               )}
             </Button>
           </form>
+
+          {isAuthenticated && (
+            <div className="mt-4 px-6 pb-6">
+              <Alert>
+                <AlertTriangle className="h-4 w-4" />
+                <AlertDescription>
+                  You appear to be already logged in. If you're experiencing
+                  issues,{" "}
+                  <button
+                    onClick={handleClearSession}
+                    className="underline text-primary hover:text-primary/80"
+                  >
+                    click here to clear your session
+                  </button>
+                  .
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -1,11 +1,17 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { apiClient } from '../lib/api';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
+import { apiClient } from "../lib/api";
 
 interface User {
   id: number;
   username: string;
   email: string;
-  role: 'super_admin' | 'admin';
+  role: "super_admin" | "admin";
   organization_id?: number;
 }
 
@@ -23,6 +29,7 @@ interface AuthContextType {
   logout: () => void;
   isAuthenticated: boolean;
   isLoading: boolean;
+  handleTokenExpiration: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -37,7 +44,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const savedToken = localStorage.getItem('auth_token');
+    const savedToken = localStorage.getItem("auth_token");
+
     if (savedToken) {
       setToken(savedToken);
       validateToken(savedToken);
@@ -47,37 +55,51 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const validateToken = async (tokenToValidate: string) => {
+    setIsLoading(true);
     try {
       const userData = await apiClient.getCurrentUser();
       setUser(userData as User);
       setToken(tokenToValidate);
-    } catch (error) {
-      console.error('Token validation failed:', error);
-      localStorage.removeItem('auth_token');
-      setToken(null);
-      setUser(null);
+    } catch (error: any) {
+      // Check if error is due to token expiration (401 Unauthorized)
+      if (error?.status === 401) {
+        handleTokenExpiration();
+      } else {
+        localStorage.removeItem("auth_token");
+        setToken(null);
+        setUser(null);
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleTokenExpiration = () => {
+    localStorage.removeItem("auth_token");
+    setToken(null);
+    setUser(null);
+
+    // Redirect to login page
+    window.location.href = "/login";
+  };
+
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      const data = await apiClient.login(email, password) as LoginResponse;
+      const data = (await apiClient.login(email, password)) as LoginResponse;
 
-      if (data?.status === 'success' && data?.token && data?.user) {
+      if (data?.status === "success" && data?.token && data?.user) {
         const authToken = data.token;
 
-        localStorage.setItem('auth_token', authToken);
+        localStorage.setItem("auth_token", authToken);
         setToken(authToken);
         setUser(data.user);
         return true;
       } else {
-        console.error('Login response missing required fields:', data);
+        console.error("Login response missing required fields:", data);
         return false;
       }
     } catch (error) {
-      console.error('Login failed:', error);
+      console.error("Login failed:", error);
       return false;
     }
   };
@@ -88,9 +110,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         await apiClient.logout();
       }
     } catch (error) {
-      console.error('Logout request failed:', error);
+      console.error("Logout request failed:", error);
     } finally {
-      localStorage.removeItem('auth_token');
+      localStorage.removeItem("auth_token");
       setToken(null);
       setUser(null);
     }
@@ -103,19 +125,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     logout,
     isAuthenticated: !!user,
     isLoading,
+    handleTokenExpiration,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }

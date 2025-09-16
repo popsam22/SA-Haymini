@@ -1,9 +1,4 @@
-// API base URL - adjust based on your backend configuration
-// For development, connect to the PHP backend running on a different port
-// const API_BASE_URL = import.meta.env.DEV
-//   ? 'http://localhost:8080/api' // Adjust port if needed
-//   : '/api';
-const API_BASE_URL = "http://107.22.138.33/Realtime_Mysql/ws.php/api";
+const API_BASE_URL = "https://api.haymini.net/Realtime_Mysql/ws.php/api";
 
 export class ApiError extends Error {
   constructor(
@@ -53,6 +48,15 @@ class ApiClient {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+
+      // Handle token expiration globally
+      if (response.status === 401 && requireAuth) {
+        // Clear token and redirect to login
+        localStorage.removeItem("auth_token");
+        window.location.href = "/login";
+        return;
+      }
+
       throw new ApiError(
         errorData.error || `HTTP ${response.status}: ${response.statusText}`,
         response.status,
@@ -139,7 +143,8 @@ class ApiClient {
       const organizationsResponse = await this.getOrganizations();
       const organizations = Array.isArray(organizationsResponse)
         ? organizationsResponse
-        : (organizationsResponse as any)?.organizations && Array.isArray((organizationsResponse as any).organizations)
+        : (organizationsResponse as any)?.organizations &&
+            Array.isArray((organizationsResponse as any).organizations)
           ? (organizationsResponse as any).organizations
           : [];
 
@@ -152,20 +157,23 @@ class ApiClient {
             : (orgUsers as any)?.users && Array.isArray((orgUsers as any).users)
               ? (orgUsers as any).users
               : [];
-              
+
           const usersWithOrgName = usersArray.map((user: any) => ({
             ...user,
-            organization_name: org.name
+            organization_name: org.name,
           }));
           allUsers.push(...usersWithOrgName);
         } catch (error) {
-          console.error(`Failed to fetch users for organization ${org.id}:`, error);
+          console.error(
+            `Failed to fetch users for organization ${org.id}:`,
+            error,
+          );
         }
       }
-      
+
       return allUsers;
     } catch (error) {
-      console.error('Failed to fetch users:', error);
+      console.error("Failed to fetch users:", error);
       return [];
     }
   }
@@ -177,7 +185,7 @@ class ApiClient {
   }
 
   async getUserLogs(punchingCode: string, organizationId?: number) {
-    const params = organizationId ? `?organization_id=${organizationId}` : '';
+    const params = organizationId ? `?organization_id=${organizationId}` : "";
     return this.request(`/users/${punchingCode}${params}`, {
       method: "GET",
     });
@@ -233,40 +241,45 @@ class ApiClient {
       // Handle different response formats
       const organizations = Array.isArray(organizationsResponse)
         ? organizationsResponse
-        : (organizationsResponse as any)?.organizations && Array.isArray((organizationsResponse as any).organizations)
+        : (organizationsResponse as any)?.organizations &&
+            Array.isArray((organizationsResponse as any).organizations)
           ? (organizationsResponse as any).organizations
           : [];
-      
+
       if (organizations.length === 0) {
-        console.log('No organizations found');
+        console.log("No organizations found");
         return [];
       }
 
       const allDevices = [];
-      
+
       // Get devices from each organization
       for (const org of organizations) {
         try {
           const orgDevices = await this.getDevicesByOrganization(org.id);
           const devicesArray = Array.isArray(orgDevices)
             ? orgDevices
-            : (orgDevices as any)?.devices && Array.isArray((orgDevices as any).devices)
+            : (orgDevices as any)?.devices &&
+                Array.isArray((orgDevices as any).devices)
               ? (orgDevices as any).devices
               : [];
-              
+
           const devicesWithOrgName = devicesArray.map((device: any) => ({
             ...device,
-            organization_name: org.name
+            organization_name: org.name,
           }));
           allDevices.push(...devicesWithOrgName);
         } catch (error) {
-          console.error(`Failed to fetch devices for organization ${org.id}:`, error);
+          console.error(
+            `Failed to fetch devices for organization ${org.id}:`,
+            error,
+          );
         }
       }
-      
+
       return allDevices;
     } catch (error) {
-      console.error('Failed to fetch devices:', error);
+      console.error("Failed to fetch devices:", error);
       return [];
     }
   }
@@ -295,9 +308,9 @@ class ApiClient {
     const backendData = {
       serial_number: data.serial_number,
       organization_id: data.organization_id,
-      device_name: data.name || 'RFID Device',
-      device_model: data.device_model || 'RFID Scanner',
-      ip_address: data.ip_address || null
+      device_name: data.name || "RFID Device",
+      device_model: data.device_model || "RFID Scanner",
+      ip_address: data.ip_address || null,
     };
 
     return this.request("/devices", {
@@ -324,7 +337,7 @@ class ApiClient {
         body: JSON.stringify({ status: data.status }),
       });
     }
-    
+
     if (data.organization_id) {
       // Assign device to organization
       return this.request(`/devices/${serialNumber}/organization`, {
@@ -334,10 +347,10 @@ class ApiClient {
     }
 
     // For other updates, we need to implement additional endpoints in the backend
-    return Promise.resolve({ 
-      status: 'success', 
-      message: 'Device updated',
-      device: { ...data, serial_number: serialNumber }
+    return Promise.resolve({
+      status: "success",
+      message: "Device updated",
+      device: { ...data, serial_number: serialNumber },
     });
   }
 
