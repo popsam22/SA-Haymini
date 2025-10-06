@@ -29,6 +29,7 @@ interface AuthContextType {
   logout: () => void;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isRedirecting: boolean;
   handleTokenExpiration: () => void;
 }
 
@@ -42,6 +43,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
     const savedToken = localStorage.getItem("auth_token");
@@ -60,6 +62,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const userData = await apiClient.getCurrentUser();
       setUser(userData as User);
       setToken(tokenToValidate);
+      setIsLoading(false);
     } catch (error: any) {
       // Check if error is due to token expiration (401 Unauthorized)
       if (error?.status === 401) {
@@ -68,13 +71,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         localStorage.removeItem("auth_token");
         setToken(null);
         setUser(null);
+        setIsLoading(false);
       }
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const handleTokenExpiration = () => {
+    setIsRedirecting(true);
     localStorage.removeItem("auth_token");
     setToken(null);
     setUser(null);
@@ -125,6 +128,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     logout,
     isAuthenticated: !!user,
     isLoading,
+    isRedirecting,
     handleTokenExpiration,
   };
 

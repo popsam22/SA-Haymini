@@ -5,9 +5,11 @@ import {
   useUsers,
   useOrganizations,
   useCreateUser,
+  useUpdateUser,
   useActivateUser,
   useDeactivateUser,
   useCreateAdmin,
+  useUpdateAdmin,
   useAdmins,
 } from "../hooks/useApi";
 import {
@@ -69,6 +71,7 @@ import {
   Shield,
 } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
+import { CSVUpload } from "../components/CSVUpload";
 
 interface User {
   punching_code: string;
@@ -133,8 +136,12 @@ export default function UsersPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOrganization, setSelectedOrganization] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddAdminDialogOpen, setIsAddAdminDialogOpen] = useState(false);
+  const [isEditAdminDialogOpen, setIsEditAdminDialogOpen] = useState(false);
   const [formData, setFormData] = useState<UserFormData>(initialFormData);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editingAdmin, setEditingAdmin] = useState<Admin | null>(null);
   const [adminFormData, setAdminFormData] =
     useState<AdminFormData>(initialAdminFormData);
 
@@ -158,7 +165,9 @@ export default function UsersPage() {
   } = useAdmins();
 
   const createUserMutation = useCreateUser();
+  const updateUserMutation = useUpdateUser();
   const createAdminMutation = useCreateAdmin();
+  const updateAdminMutation = useUpdateAdmin();
   const activateUserMutation = useActivateUser();
   const deactivateUserMutation = useDeactivateUser();
 
@@ -181,6 +190,39 @@ export default function UsersPage() {
     }
   };
 
+  // Handle success and error for update user
+  const handleUpdateUser = async (data: UserFormData) => {
+    try {
+      await updateUserMutation.mutateAsync(data);
+      setFormData(initialFormData);
+      setEditingUser(null);
+      setIsEditDialogOpen(false);
+      toast({
+        title: "Success",
+        description: "User updated successfully.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update user.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle opening edit dialog
+  const handleEditUser = (user: User) => {
+    setEditingUser(user);
+    setFormData({
+      name: user.name,
+      punching_code: user.punching_code,
+      phone: user.phone_number,
+      email: user.email,
+      organization_id: user.organization_id || 0,
+    });
+    setIsEditDialogOpen(true);
+  };
+
   // Handle success and error for create admin
   const handleCreateAdmin = async (data: AdminFormData) => {
     try {
@@ -199,6 +241,40 @@ export default function UsersPage() {
         variant: "destructive",
       });
     }
+  };
+
+  // Handle success and error for update admin
+  const handleUpdateAdmin = async (data: AdminFormData & { id: number }) => {
+    try {
+      await updateAdminMutation.mutateAsync(data);
+      setAdminFormData(initialAdminFormData);
+      setEditingAdmin(null);
+      setIsEditAdminDialogOpen(false);
+      refetchAdmins(); // Refresh admins list
+      toast({
+        title: "Success",
+        description: "Admin updated successfully.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update admin.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle opening edit admin dialog
+  const handleEditAdmin = (admin: Admin) => {
+    setEditingAdmin(admin);
+    setAdminFormData({
+      username: admin.username,
+      email: admin.email,
+      password: "", // Leave empty for optional password change
+      role: admin.role,
+      organization_id: admin.organization_id,
+    });
+    setIsEditAdminDialogOpen(true);
   };
 
   // Handle activate user
@@ -300,6 +376,19 @@ export default function UsersPage() {
     await handleCreateUser(formData);
   };
 
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (formData.organization_id === 0) {
+      toast({
+        title: "Error",
+        description: "Please select an organization.",
+        variant: "destructive",
+      });
+      return;
+    }
+    await handleUpdateUser(formData);
+  };
+
   const handleCreateAdminSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (adminFormData.role === "admin" && !adminFormData.organization_id) {
@@ -311,6 +400,21 @@ export default function UsersPage() {
       return;
     }
     await handleCreateAdmin(adminFormData);
+  };
+
+  const handleEditAdminSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (adminFormData.role === "admin" && !adminFormData.organization_id) {
+      toast({
+        title: "Error",
+        description: "Please select an organization for admin role.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (editingAdmin) {
+      await handleUpdateAdmin({ ...adminFormData, id: editingAdmin.id });
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -410,6 +514,7 @@ export default function UsersPage() {
           </p>
         </div>
         <div className="flex items-center space-x-2">
+          <CSVUpload organizations={organizations} />
           <Dialog
             open={isAddAdminDialogOpen}
             onOpenChange={setIsAddAdminDialogOpen}
@@ -546,6 +651,139 @@ export default function UsersPage() {
               </form>
             </DialogContent>
           </Dialog>
+          <Dialog open={isEditAdminDialogOpen} onOpenChange={setIsEditAdminDialogOpen}>
+            <DialogContent className="sm:max-w-[500px]">
+              <form onSubmit={handleEditAdminSubmit}>
+                <DialogHeader>
+                  <DialogTitle>Edit Admin</DialogTitle>
+                  <DialogDescription>
+                    Update admin account information and permissions.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-admin-username">Username *</Label>
+                    <Input
+                      id="edit-admin-username"
+                      value={adminFormData.username}
+                      onChange={(e) =>
+                        setAdminFormData((prev) => ({
+                          ...prev,
+                          username: e.target.value,
+                        }))
+                      }
+                      placeholder="Enter admin name"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-admin-email">Email Address *</Label>
+                    <Input
+                      id="edit-admin-email"
+                      type="email"
+                      value={adminFormData.email}
+                      onChange={(e) =>
+                        setAdminFormData((prev) => ({
+                          ...prev,
+                          email: e.target.value,
+                        }))
+                      }
+                      placeholder="Enter admin email"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-admin-password">Password</Label>
+                    <Input
+                      id="edit-admin-password"
+                      type="password"
+                      value={adminFormData.password}
+                      onChange={(e) =>
+                        setAdminFormData((prev) => ({
+                          ...prev,
+                          password: e.target.value,
+                        }))
+                      }
+                      placeholder="Leave empty to keep current password"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Leave blank to keep the current password
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-admin-role">Role *</Label>
+                    <Select
+                      value={adminFormData.role}
+                      onValueChange={(value: "super_admin" | "admin") =>
+                        setAdminFormData((prev) => ({ ...prev, role: value }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="super_admin">Super Admin</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {adminFormData.role === "admin" && (
+                    <div className="space-y-2">
+                      <Label htmlFor="edit-admin-organization">Organization *</Label>
+                      <Select
+                        value={adminFormData.organization_id?.toString() || ""}
+                        onValueChange={(value) =>
+                          setAdminFormData((prev) => ({
+                            ...prev,
+                            organization_id: value
+                              ? parseInt(value)
+                              : undefined,
+                          }))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select an organization" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {organizations.map((org: any) => (
+                            <SelectItem key={org.id} value={org.id.toString()}>
+                              {org.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setIsEditAdminDialogOpen(false);
+                      setAdminFormData(initialAdminFormData);
+                      setEditingAdmin(null);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={updateAdminMutation.isPending}
+                  >
+                    {updateAdminMutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Updating...
+                      </>
+                    ) : (
+                      "Update Admin"
+                    )}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -673,6 +911,132 @@ export default function UsersPage() {
               </form>
             </DialogContent>
           </Dialog>
+          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <DialogContent className="sm:max-w-[500px]">
+              <form onSubmit={handleEditSubmit}>
+                <DialogHeader>
+                  <DialogTitle>Edit User</DialogTitle>
+                  <DialogDescription>
+                    Update user information in the system.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-user-name">Full Name *</Label>
+                    <Input
+                      id="edit-user-name"
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          name: e.target.value,
+                        }))
+                      }
+                      placeholder="e.g., John Doe"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-punching-code">Punching Code *</Label>
+                    <Input
+                      id="edit-punching-code"
+                      value={formData.punching_code}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          punching_code: e.target.value,
+                        }))
+                      }
+                      placeholder="e.g., EMP001 or unique identifier"
+                      required
+                      disabled
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-phone">Phone Number *</Label>
+                    <Input
+                      id="edit-phone"
+                      value={formData.phone}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          phone: e.target.value,
+                        }))
+                      }
+                      placeholder="e.g., +1 (555) 123-4567"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-email">Email Address *</Label>
+                    <Input
+                      id="edit-email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          email: e.target.value,
+                        }))
+                      }
+                      placeholder="e.g., john.doe@example.com"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-organization">Organization *</Label>
+                    <Select
+                      value={
+                        formData.organization_id > 0
+                          ? formData.organization_id.toString()
+                          : ""
+                      }
+                      onValueChange={(value) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          organization_id: parseInt(value),
+                        }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select an organization" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {organizations.map((org: any) => (
+                          <SelectItem key={org.id} value={org.id.toString()}>
+                            {org.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setIsEditDialogOpen(false);
+                      setFormData(initialFormData);
+                      setEditingUser(null);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={updateUserMutation.isPending}>
+                    {updateUserMutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Updating...
+                      </>
+                    ) : (
+                      "Update User"
+                    )}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -698,8 +1062,8 @@ export default function UsersPage() {
               />
             </div>
             <Select
-              value={selectedOrganization}
-              onValueChange={setSelectedOrganization}
+              value={selectedOrganization || "all"}
+              onValueChange={(value) => setSelectedOrganization(value === "all" ? "" : value)}
             >
               <SelectTrigger className="w-full lg:w-[200px]">
                 <SelectValue placeholder="All Organizations" />
@@ -847,7 +1211,11 @@ export default function UsersPage() {
                             )}
                           </Button>
                         )}
-                        <Button variant="ghost" size="sm">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditUser(user)}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
                       </div>
@@ -898,8 +1266,8 @@ export default function UsersPage() {
                   />
                 </div>
                 <Select
-                  value={selectedOrganization}
-                  onValueChange={setSelectedOrganization}
+                  value={selectedOrganization || "all"}
+                  onValueChange={(value) => setSelectedOrganization(value === "all" ? "" : value)}
                 >
                   <SelectTrigger className="w-full lg:w-[200px]">
                     <SelectValue placeholder="All Organizations" />
@@ -994,7 +1362,11 @@ export default function UsersPage() {
                           )}
                         </TableCell>
                         <TableCell className="text-right">
-                          <Button variant="ghost" size="sm">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditAdmin(admin)}
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
                         </TableCell>

@@ -31,6 +31,10 @@ import {
   Phone,
   Mail,
   Calendar,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  ShieldCheck,
 } from "lucide-react";
 
 interface Organization {
@@ -40,6 +44,7 @@ interface Organization {
   contact_person?: string;
   email?: string;
   phone?: string;
+  status?: 'active' | 'inactive';
   created_at?: string;
   updated_at?: string;
 }
@@ -102,6 +107,14 @@ export default function Organizations() {
     },
   });
 
+  const statusToggleMutation = useMutation({
+    mutationFn: ({ id, status }: { id: number; status: 'active' | 'inactive' }) =>
+      apiClient.updateOrganization(id, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["organizations"] });
+    },
+  });
+
   const filteredOrganizations = organizations.filter(
     (org: Organization) =>
       org.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -130,6 +143,14 @@ export default function Organizations() {
         },
       });
     }
+  };
+
+  const handleStatusToggle = (org: Organization) => {
+    const newStatus = org.status === 'active' ? 'inactive' : 'active';
+    statusToggleMutation.mutate({
+      id: org.id,
+      status: newStatus,
+    });
   };
 
   if (isLoading) {
@@ -298,8 +319,21 @@ export default function Organizations() {
                     </CardDescription>
                   </div>
                 </div>
-                <Badge className="bg-green-100 text-green-800 border-green-200">
-                  Active
+                <Badge
+                  className={
+                    org.status === 'active'
+                      ? "bg-green-100 text-green-800 border-green-200"
+                      : "bg-red-100 text-red-800 border-red-200"
+                  }
+                >
+                  <div className="flex items-center space-x-1">
+                    {org.status === 'active' ? (
+                      <CheckCircle className="h-3 w-3" />
+                    ) : (
+                      <XCircle className="h-3 w-3" />
+                    )}
+                    <span>{org.status === 'active' ? 'Active' : 'Inactive'}</span>
+                  </div>
                 </Badge>
               </div>
             </CardHeader>
@@ -351,6 +385,25 @@ export default function Organizations() {
                 >
                   <Edit className="h-4 w-4 mr-2" />
                   Edit
+                </Button>
+                <Button
+                  variant={org.status === 'active' ? "destructive" : "default"}
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => handleStatusToggle(org)}
+                  disabled={statusToggleMutation.isPending}
+                >
+                  {org.status === 'active' ? (
+                    <>
+                      <XCircle className="h-4 w-4 mr-2" />
+                      Deactivate
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Activate
+                    </>
+                  )}
                 </Button>
               </div>
             </CardContent>

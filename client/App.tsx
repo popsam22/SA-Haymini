@@ -65,7 +65,9 @@ import { RootRedirect } from "./components/RootRedirect";
 import Dashboard from "./pages/Dashboard";
 import Devices from "./pages/Devices";
 import Organizations from "./pages/Organizations";
+import Admins from "./pages/Admins";
 import UsersPage from "./pages/Users";
+import DeviceAssignments from "./pages/DeviceAssignments";
 import Cards from "./pages/Cards";
 import DeviceControl from "./pages/DeviceControl";
 import Biometrics from "./pages/Biometrics";
@@ -117,11 +119,31 @@ const App = () => (
               }
             />
             <Route
+              path="/admins"
+              element={
+                <ProtectedRoute requiredRole="super_admin">
+                  <DashboardLayout>
+                    <Admins />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/users"
               element={
                 <ProtectedRoute requiredRole="super_admin">
                   <DashboardLayout>
                     <UsersPage />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/device-assignments"
+              element={
+                <ProtectedRoute requiredRole="super_admin">
+                  <DashboardLayout>
+                    <DeviceAssignments />
                   </DashboardLayout>
                 </ProtectedRoute>
               }

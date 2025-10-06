@@ -14,7 +14,9 @@ import {
   Power,
   LogOut,
   Clock,
-  User
+  User,
+  UserCheck,
+  Link as LinkIcon
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -29,7 +31,9 @@ const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
   { name: "RFID Devices", href: "/devices", icon: Radio },
   { name: "Organizations", href: "/organizations", icon: Building2 },
+  { name: "Admins", href: "/admins", icon: UserCheck },
   { name: "Users", href: "/users", icon: Users },
+  { name: "Device Assignments", href: "/device-assignments", icon: LinkIcon },
   { name: "Cards", href: "/cards", icon: CreditCard },
   { name: "Device Control", href: "/device-control", icon: Power },
   { name: "Biometrics", href: "/biometrics", icon: Shield },

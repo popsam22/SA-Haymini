@@ -84,7 +84,7 @@ export const useUsersByOrganization = (organizationId: number) => {
 
 export const useCreateUser = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (data: {
       name: string;
@@ -95,9 +95,31 @@ export const useCreateUser = () => {
     }) => apiClient.createUser(data),
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      queryClient.invalidateQueries({ 
-        queryKey: ['organizations', variables.organization_id, 'users'] 
+      queryClient.invalidateQueries({
+        queryKey: ['organizations', variables.organization_id, 'users']
       });
+    },
+  });
+};
+
+export const useUpdateUser = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: {
+      name: string;
+      punching_code: string;
+      phone: string;
+      email: string;
+      organization_id?: number;
+    }) => apiClient.updateUser(data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      if (variables.organization_id) {
+        queryClient.invalidateQueries({
+          queryKey: ['organizations', variables.organization_id, 'users']
+        });
+      }
     },
   });
 };
@@ -212,7 +234,7 @@ export const useAdmins = () => {
 
 export const useCreateAdmin = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (data: {
       username: string;
@@ -221,6 +243,24 @@ export const useCreateAdmin = () => {
       role: 'super_admin' | 'admin';
       organization_id?: number;
     }) => apiClient.createAdmin(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admins'] });
+    },
+  });
+};
+
+export const useUpdateAdmin = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: {
+      id: number;
+      username: string;
+      email: string;
+      password?: string;
+      role: 'super_admin' | 'admin';
+      organization_id?: number;
+    }) => apiClient.updateAdmin(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admins'] });
     },

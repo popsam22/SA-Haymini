@@ -49,14 +49,6 @@ class ApiClient {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
 
-      // Handle token expiration globally
-      if (response.status === 401 && requireAuth) {
-        // Clear token and redirect to login
-        localStorage.removeItem("auth_token");
-        window.location.href = "/login";
-        return;
-      }
-
       throw new ApiError(
         errorData.error || `HTTP ${response.status}: ${response.statusText}`,
         response.status,
@@ -127,6 +119,7 @@ class ApiClient {
       contact_person?: string;
       email?: string;
       phone?: string;
+      status?: 'active' | 'inactive';
     },
   ) {
     return this.request(`/organizations/${id}`, {
@@ -214,6 +207,19 @@ class ApiClient {
     organization_id?: number;
   }) {
     return this.request("/users/bulk", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async updateUser(data: {
+    name: string;
+    punching_code: string;
+    phone: string;
+    email: string;
+    organization_id?: number;
+  }) {
+    return this.request("/users", {
       method: "POST",
       body: JSON.stringify(data),
     });
@@ -407,6 +413,20 @@ class ApiClient {
     });
   }
 
+  async updateAdmin(data: {
+    id: number;
+    username: string;
+    email: string;
+    password?: string;
+    role: "super_admin" | "admin";
+    organization_id?: number;
+  }) {
+    return this.request("/admins", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
   async updateAdminPassword(
     id: number,
     data: {
@@ -418,6 +438,125 @@ class ApiClient {
       method: "PUT",
       body: JSON.stringify(data),
     });
+  }
+
+  async impersonateAdmin(adminId: number) {
+    return this.request(`/admins/${adminId}/impersonate`, {
+      method: "POST",
+    });
+  }
+
+  async exitImpersonation() {
+    return this.request("/admins/exit-impersonation", {
+      method: "POST",
+    });
+  }
+
+  // User-Device Assignments
+  async getUserDeviceAssignments(userId: number) {
+    return this.request(`/users/${userId}/device-assignments`, {
+      method: "GET",
+    });
+  }
+
+  async assignUserToDevice(data: {
+    user_id: number;
+    device_serial: string;
+    organization_id: number;
+  }) {
+    return this.request("/user-device-assignments", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async removeUserFromDevice(userId: number, deviceSerial: string) {
+    return this.request(`/user-device-assignments/${userId}/${deviceSerial}`, {
+      method: "DELETE",
+    });
+  }
+
+  async getDeviceAssignments(deviceSerial: string) {
+    return this.request(`/devices/${deviceSerial}/assignments`, {
+      method: "GET",
+    });
+  }
+
+  async bulkAssignUsersToDevice(data: {
+    user_ids: number[];
+    device_serial: string;
+    organization_id: number;
+  }) {
+    return this.request("/user-device-assignments/bulk", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getOrganizationDeviceAssignments(organizationId: number) {
+    return this.request(`/organizations/${organizationId}/device-assignments`, {
+      method: "GET",
+    });
+  }
+
+  // CSV Upload for Users
+  async uploadUsersFromCSV(csvFile: File, organizationId?: number) {
+    const formData = new FormData();
+    formData.append('csv_file', csvFile);
+    if (organizationId) {
+      formData.append('organization_id', organizationId.toString());
+    }
+
+    const url = `${API_BASE_URL}/users/upload-csv`;
+    const token = this.getAuthToken();
+
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new ApiError(
+        errorData.error || `HTTP ${response.status}: ${response.statusText}`,
+        response.status,
+        errorData,
+      );
+    }
+
+    return response.json();
+  }
+
+  async downloadCSVTemplate() {
+    const url = `${API_BASE_URL}/users/csv-template`;
+    const token = this.getAuthToken();
+
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(url, {
+      method: "GET",
+      headers,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new ApiError(
+        errorData.error || `HTTP ${response.status}: ${response.statusText}`,
+        response.status,
+        errorData,
+      );
+    }
+
+    return response.text(); // Return as text for CSV
   }
 }
 
