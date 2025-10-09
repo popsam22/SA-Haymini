@@ -119,7 +119,7 @@ class ApiClient {
       contact_person?: string;
       email?: string;
       phone?: string;
-      status?: 'active' | 'inactive';
+      status?: "active" | "inactive";
     },
   ) {
     return this.request(`/organizations/${id}`, {
@@ -461,33 +461,36 @@ class ApiClient {
 
   async assignUserToDevice(data: {
     user_id: number;
-    device_serial: string;
+    device_id: number;
     organization_id: number;
   }) {
-    return this.request(`/users/${data.user_id}/devices/${data.device_serial}/assign`, {
-      method: "POST",
-      body: JSON.stringify({ organization_id: data.organization_id }),
-    });
+    return this.request(
+      `/users/${data.user_id}/devices/${data.device_id}/assign`,
+      {
+        method: "POST",
+        body: JSON.stringify({ organization_id: data.organization_id }),
+      },
+    );
   }
 
-  async removeUserFromDevice(userId: number, deviceSerial: string) {
-    return this.request(`/users/${userId}/devices/${deviceSerial}/assign`, {
+  async removeUserFromDevice(userId: number, deviceId: number) {
+    return this.request(`/users/${userId}/devices/${deviceId}/assign`, {
       method: "DELETE",
     });
   }
 
-  async getDeviceAssignments(deviceSerial: string) {
-    return this.request(`/devices/${deviceSerial}/assignments`, {
+  async getDeviceAssignments(deviceId: number) {
+    return this.request(`/devices/${deviceId}/assignments`, {
       method: "GET",
     });
   }
 
   async bulkAssignUsersToDevice(data: {
     user_ids: number[];
-    device_serial: string;
+    device_id: number;
     organization_id: number;
   }) {
-    return this.request(`/devices/${data.device_serial}/users/bulk-assign`, {
+    return this.request(`/devices/${data.device_id}/users/bulk-assign`, {
       method: "POST",
       body: JSON.stringify({ user_ids: data.user_ids }),
     });
@@ -502,9 +505,9 @@ class ApiClient {
   // CSV Upload for Users
   async uploadUsersFromCSV(csvFile: File, organizationId?: number) {
     const formData = new FormData();
-    formData.append('csv_file', csvFile);
+    formData.append("csv_file", csvFile);
     if (organizationId) {
-      formData.append('organization_id', organizationId.toString());
+      formData.append("organization_id", organizationId.toString());
     }
 
     const url = `${API_BASE_URL}/users/upload-csv`;

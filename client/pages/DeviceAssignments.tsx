@@ -37,19 +37,11 @@ import {
   TableRow,
 } from "../components/ui/table";
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "../components/ui/tabs";
-import {
   Plus,
   Search,
   Users,
   Radio,
   Building2,
-  UserPlus,
-  UserMinus,
   Link as LinkIcon,
   Unlink,
 } from "lucide-react";
@@ -58,6 +50,7 @@ import { useToast } from "../hooks/use-toast";
 interface Assignment {
   id: number;
   user_id: number;
+  device_id: number;
   device_serial: string;
   organization_id: number;
   user_name?: string;
@@ -77,6 +70,7 @@ interface User {
 }
 
 interface Device {
+  id: number;
   serial_number: string;
   device_name: string;
   organization_id: number;
@@ -92,48 +86,39 @@ export default function DeviceAssignments() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOrganization, setSelectedOrganization] = useState("");
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
-  const [selectedDevice, setSelectedDevice] = useState("");
+  const [selectedDevice, setSelectedDevice] = useState<number | null>(null);
   const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
 
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const {
-    data: organizationsResponse,
-    isLoading: isLoadingOrgs,
-  } = useQuery({
+  const { data: organizationsResponse, isLoading: isLoadingOrgs } = useQuery({
     queryKey: ["organizations"],
     queryFn: () => apiClient.getOrganizations(),
   });
 
-  const {
-    data: usersResponse,
-    isLoading: isLoadingUsers,
-  } = useQuery({
+  const { data: usersResponse, isLoading: isLoadingUsers } = useQuery({
     queryKey: ["users"],
     queryFn: () => apiClient.getUsers(),
   });
 
-  const {
-    data: devicesResponse,
-    isLoading: isLoadingDevices,
-  } = useQuery({
+  const { data: devicesResponse, isLoading: isLoadingDevices } = useQuery({
     queryKey: ["devices"],
     queryFn: () => apiClient.getDevices(),
   });
 
   // Get assignments for selected organization
-  const {
-    data: assignmentsResponse,
-    isLoading: isLoadingAssignments,
-  } = useQuery({
-    queryKey: ["device-assignments", selectedOrganization],
-    queryFn: () =>
-      selectedOrganization
-        ? apiClient.getOrganizationDeviceAssignments(parseInt(selectedOrganization))
-        : Promise.resolve([]),
-    enabled: !!selectedOrganization,
-  });
+  const { data: assignmentsResponse, isLoading: isLoadingAssignments } =
+    useQuery({
+      queryKey: ["device-assignments", selectedOrganization],
+      queryFn: () =>
+        selectedOrganization
+          ? apiClient.getOrganizationDeviceAssignments(
+              parseInt(selectedOrganization),
+            )
+          : Promise.resolve([]),
+      enabled: !!selectedOrganization,
+    });
 
   // Process data
   const organizations = Array.isArray(organizationsResponse)
@@ -147,30 +132,37 @@ export default function DeviceAssignments() {
     : (assignmentsResponse as any)?.assignments || [];
 
   // Filter data by organization
-  const filteredUsers = users.filter((user: User) =>
-    !selectedOrganization || user.organization_id.toString() === selectedOrganization
+  const filteredUsers = users.filter(
+    (user: User) =>
+      !selectedOrganization ||
+      user.organization_id.toString() === selectedOrganization,
   );
 
-  const filteredDevices = devices.filter((device: Device) =>
-    !selectedOrganization || device.organization_id.toString() === selectedOrganization
+  const filteredDevices = devices.filter(
+    (device: Device) =>
+      !selectedOrganization ||
+      device.organization_id.toString() === selectedOrganization,
   );
 
-  const filteredAssignments = assignments.filter((assignment: Assignment) =>
-    assignment.user_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    assignment.device_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    assignment.device_serial.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredAssignments = assignments.filter(
+    (assignment: Assignment) =>
+      assignment.user_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      assignment.device_name
+        ?.toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      assignment.device_serial.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const assignMutation = useMutation({
     mutationFn: (data: {
       user_ids: number[];
-      device_serial: string;
+      device_id: number;
       organization_id: number;
     }) => {
       if (data.user_ids.length === 1) {
         return apiClient.assignUserToDevice({
           user_id: data.user_ids[0],
-          device_serial: data.device_serial,
+          device_id: data.device_id,
           organization_id: data.organization_id,
         });
       } else {
@@ -180,7 +172,7 @@ export default function DeviceAssignments() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["device-assignments"] });
       setIsAssignDialogOpen(false);
-      setSelectedDevice("");
+      setSelectedDevice(null);
       setSelectedUsers([]);
       toast({
         title: "Assignment Successful",
@@ -197,8 +189,13 @@ export default function DeviceAssignments() {
   });
 
   const unassignMutation = useMutation({
-    mutationFn: ({ userId, deviceSerial }: { userId: number; deviceSerial: string }) =>
-      apiClient.removeUserFromDevice(userId, deviceSerial),
+    mutationFn: ({
+      userId,
+      deviceId,
+    }: {
+      userId: number;
+      deviceId: number;
+    }) => apiClient.removeUserFromDevice(userId, deviceId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["device-assignments"] });
       toast({
@@ -216,7 +213,11 @@ export default function DeviceAssignments() {
   });
 
   const handleAssignUsers = () => {
-    if (!selectedDevice || selectedUsers.length === 0 || !selectedOrganization) {
+    if (
+      !selectedDevice ||
+      selectedUsers.length === 0 ||
+      !selectedOrganization
+    ) {
       toast({
         title: "Invalid Selection",
         description: "Please select a device and at least one user.",
@@ -227,7 +228,7 @@ export default function DeviceAssignments() {
 
     assignMutation.mutate({
       user_ids: selectedUsers,
-      device_serial: selectedDevice,
+      device_id: selectedDevice,
       organization_id: parseInt(selectedOrganization),
     });
   };
@@ -235,15 +236,15 @@ export default function DeviceAssignments() {
   const handleUnassign = (assignment: Assignment) => {
     unassignMutation.mutate({
       userId: assignment.user_id,
-      deviceSerial: assignment.device_serial,
+      deviceId: assignment.device_id,
     });
   };
 
   const toggleUserSelection = (userId: number) => {
-    setSelectedUsers(prev =>
+    setSelectedUsers((prev) =>
       prev.includes(userId)
-        ? prev.filter(id => id !== userId)
-        : [...prev, userId]
+        ? prev.filter((id) => id !== userId)
+        : [...prev, userId],
     );
   };
 
@@ -260,7 +261,9 @@ export default function DeviceAssignments() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Device Assignments</h1>
+          <h1 className="text-3xl font-bold text-foreground">
+            Device Assignments
+          </h1>
           <p className="text-muted-foreground mt-1">
             Manage user access to RFID devices by organization
           </p>
@@ -285,13 +288,19 @@ export default function DeviceAssignments() {
             <div className="grid gap-4 py-4">
               <div>
                 <Label htmlFor="device-select">Select Device</Label>
-                <Select value={selectedDevice} onValueChange={setSelectedDevice}>
+                <Select
+                  value={selectedDevice?.toString() || ""}
+                  onValueChange={(value) => setSelectedDevice(parseInt(value))}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Choose a device" />
                   </SelectTrigger>
                   <SelectContent>
                     {filteredDevices.map((device: Device) => (
-                      <SelectItem key={device.serial_number} value={device.serial_number}>
+                      <SelectItem
+                        key={device.id}
+                        value={device.id.toString()}
+                      >
                         {device.device_name} ({device.serial_number})
                       </SelectItem>
                     ))}
@@ -334,7 +343,11 @@ export default function DeviceAssignments() {
               </Button>
               <Button
                 onClick={handleAssignUsers}
-                disabled={assignMutation.isPending || !selectedDevice || selectedUsers.length === 0}
+                disabled={
+                  assignMutation.isPending ||
+                  !selectedDevice ||
+                  selectedUsers.length === 0
+                }
               >
                 {assignMutation.isPending ? "Assigning..." : "Assign Users"}
               </Button>
@@ -351,7 +364,9 @@ export default function DeviceAssignments() {
               <Label htmlFor="org-filter">Filter by Organization</Label>
               <Select
                 value={selectedOrganization || "all"}
-                onValueChange={(value) => setSelectedOrganization(value === "all" ? "" : value)}
+                onValueChange={(value) =>
+                  setSelectedOrganization(value === "all" ? "" : value)
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="All organizations" />
@@ -391,15 +406,19 @@ export default function DeviceAssignments() {
             <span>Current Assignments</span>
             {selectedOrganization && (
               <Badge variant="secondary">
-                {organizations.find((o: Organization) => o.id.toString() === selectedOrganization)?.name}
+                {
+                  organizations.find(
+                    (o: Organization) =>
+                      o.id.toString() === selectedOrganization,
+                  )?.name
+                }
               </Badge>
             )}
           </CardTitle>
           <CardDescription>
             {selectedOrganization
               ? `Showing assignments for selected organization (${filteredAssignments.length} total)`
-              : "Select an organization to view assignments"
-            }
+              : "Select an organization to view assignments"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -421,12 +440,16 @@ export default function DeviceAssignments() {
                 </TableHeader>
                 <TableBody>
                   {filteredAssignments.map((assignment: Assignment) => (
-                    <TableRow key={`${assignment.user_id}-${assignment.device_serial}`}>
+                    <TableRow
+                      key={`${assignment.user_id}-${assignment.device_id}`}
+                    >
                       <TableCell>
                         <div className="flex items-center space-x-2">
                           <Users className="h-4 w-4 text-muted-foreground" />
                           <div>
-                            <div className="font-medium">{assignment.user_name}</div>
+                            <div className="font-medium">
+                              {assignment.user_name}
+                            </div>
                             <div className="text-sm text-muted-foreground">
                               ID: {assignment.user_id}
                             </div>
@@ -437,7 +460,9 @@ export default function DeviceAssignments() {
                         <div className="flex items-center space-x-2">
                           <Radio className="h-4 w-4 text-muted-foreground" />
                           <div>
-                            <div className="font-medium">{assignment.device_name}</div>
+                            <div className="font-medium">
+                              {assignment.device_name}
+                            </div>
                             <div className="text-sm text-muted-foreground">
                               {assignment.device_serial}
                             </div>
@@ -446,11 +471,14 @@ export default function DeviceAssignments() {
                       </TableCell>
                       <TableCell>
                         {assignment.assigned_at
-                          ? new Date(assignment.assigned_at).toLocaleDateString()
-                          : "N/A"
-                        }
+                          ? new Date(
+                              assignment.assigned_at,
+                            ).toLocaleDateString()
+                          : "N/A"}
                       </TableCell>
-                      <TableCell>{assignment.assigned_by || "System"}</TableCell>
+                      <TableCell>
+                        {assignment.assigned_by || "System"}
+                      </TableCell>
                       <TableCell>
                         <Button
                           variant="destructive"
@@ -470,7 +498,9 @@ export default function DeviceAssignments() {
               <div className="text-center py-8 text-muted-foreground">
                 <LinkIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
                 <p>No device assignments found for this organization.</p>
-                <p className="text-sm">Create assignments using the "Assign Users" button above.</p>
+                <p className="text-sm">
+                  Create assignments using the "Assign Users" button above.
+                </p>
               </div>
             )
           ) : (
