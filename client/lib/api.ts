@@ -464,14 +464,14 @@ class ApiClient {
     device_serial: string;
     organization_id: number;
   }) {
-    return this.request("/user-device-assignments", {
+    return this.request(`/users/${data.user_id}/devices/${data.device_serial}/assign`, {
       method: "POST",
-      body: JSON.stringify(data),
+      body: JSON.stringify({ organization_id: data.organization_id }),
     });
   }
 
   async removeUserFromDevice(userId: number, deviceSerial: string) {
-    return this.request(`/user-device-assignments/${userId}/${deviceSerial}`, {
+    return this.request(`/users/${userId}/devices/${deviceSerial}/assign`, {
       method: "DELETE",
     });
   }
@@ -487,9 +487,9 @@ class ApiClient {
     device_serial: string;
     organization_id: number;
   }) {
-    return this.request("/user-device-assignments/bulk", {
+    return this.request(`/devices/${data.device_serial}/users/bulk-assign`, {
       method: "POST",
-      body: JSON.stringify(data),
+      body: JSON.stringify({ user_ids: data.user_ids }),
     });
   }
 
