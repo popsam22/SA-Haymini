@@ -72,10 +72,13 @@ interface AttendanceLog {
   date: string;
   time: string;
   Tid: string;
+  device_serial?: string;
+  device_name?: string;
   user_id: number;
   organization_id: number;
   name: string;
   organization_name: string;
+  user_type?: "staff" | "student";
 }
 
 interface Organization {
@@ -109,6 +112,7 @@ export default function Attendance() {
   const [selectedOrganization, setSelectedOrganization] = useState("");
   const [selectedDevice, setSelectedDevice] = useState("");
   const [selectedUser, setSelectedUser] = useState("");
+  const [selectedUserType, setSelectedUserType] = useState("");
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(new Date());
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
@@ -157,25 +161,29 @@ export default function Attendance() {
 
   // Filtered logs
   const filteredLogs: AttendanceLog[] = logs.filter((log) => {
-    const matchesSearch = 
+    const matchesSearch =
       log.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       log.punchingcode?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       log.Tid?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       log.organization_name?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesOrg = !selectedOrganization || 
-      selectedOrganization === "all" || 
+
+    const matchesOrg = !selectedOrganization ||
+      selectedOrganization === "all" ||
       log.organization_id?.toString() === selectedOrganization;
-    
-    const matchesDevice = !selectedDevice || 
-      selectedDevice === "all" || 
+
+    const matchesDevice = !selectedDevice ||
+      selectedDevice === "all" ||
       log.Tid === selectedDevice;
-    
-    const matchesUser = !selectedUser || 
-      selectedUser === "all" || 
+
+    const matchesUser = !selectedUser ||
+      selectedUser === "all" ||
       log.punchingcode === selectedUser;
 
-    return matchesSearch && matchesOrg && matchesDevice && matchesUser;
+    const matchesUserType = !selectedUserType ||
+      selectedUserType === "all" ||
+      log.user_type === selectedUserType;
+
+    return matchesSearch && matchesOrg && matchesDevice && matchesUser && matchesUserType;
   });
 
   const getLogTypeBadge = (time: string) => {
@@ -222,8 +230,10 @@ export default function Attendance() {
       'Timesheet ID': log.timesheetid,
       'User Name': log.name,
       'Punching Code': log.punchingcode,
+      'User Type': log.user_type === 'staff' ? 'Staff' : log.user_type === 'student' ? 'Student' : 'N/A',
       'Organization': log.organization_name,
-      'Device TID': log.Tid,
+      'Device Name': log.device_name || 'N/A',
+      'Device TID': log.Tid || log.device_serial || 'N/A',
       'Date': log.date,
       'Time': formatTime(log.time),
       'User ID': log.user_id,
@@ -234,7 +244,7 @@ export default function Attendance() {
     XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance Logs");
 
     XLSX.writeFile(workbook, `${filename}.xlsx`);
-    
+
     toast({
       title: "Export Successful",
       description: `${exportData.length} records exported to ${filename}.xlsx`,
@@ -462,6 +472,16 @@ export default function Attendance() {
                 ))}
               </SelectContent>
             </Select>
+            <Select value={selectedUserType} onValueChange={setSelectedUserType}>
+              <SelectTrigger>
+                <SelectValue placeholder="All User Types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All User Types</SelectItem>
+                <SelectItem value="staff">Staff</SelectItem>
+                <SelectItem value="student">Student</SelectItem>
+              </SelectContent>
+            </Select>
             <Select value={selectedDevice} onValueChange={setSelectedDevice}>
               <SelectTrigger>
                 <SelectValue placeholder="All Devices" />
@@ -554,8 +574,9 @@ export default function Attendance() {
               <TableHeader>
                 <TableRow>
                   <TableHead>User</TableHead>
+                  <TableHead>User Type</TableHead>
                   <TableHead>Organization</TableHead>
-                  <TableHead>Device TID</TableHead>
+                  <TableHead>Device</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Time</TableHead>
                   <TableHead>Timesheet ID</TableHead>
@@ -577,6 +598,11 @@ export default function Attendance() {
                         </div>
                       </TableCell>
                       <TableCell>
+                        <Badge variant={log.user_type === "staff" ? "default" : "secondary"}>
+                          {log.user_type === "staff" ? "Staff" : log.user_type === "student" ? "Student" : "N/A"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
                         <div className="flex items-center space-x-2">
                           <Building2 className="h-4 w-4 text-muted-foreground" />
                           <span className="text-sm">{log.organization_name}</span>
@@ -585,7 +611,14 @@ export default function Attendance() {
                       <TableCell>
                         <div className="flex items-center space-x-2">
                           <Radio className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-mono text-sm">{log.Tid}</span>
+                          <div className="flex flex-col">
+                            {log.device_name && (
+                              <span className="text-sm font-medium">{log.device_name}</span>
+                            )}
+                            <span className="font-mono text-xs text-muted-foreground">
+                              {log.Tid || log.device_serial || "N/A"}
+                            </span>
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -611,7 +644,7 @@ export default function Attendance() {
               <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-medium text-foreground mb-2">No Attendance Logs Found</h3>
               <p className="text-muted-foreground mb-4">
-                {searchTerm || selectedOrganization || selectedDevice || selectedUser
+                {searchTerm || selectedOrganization || selectedDevice || selectedUser || selectedUserType
                   ? "No logs match your current filters."
                   : "No attendance logs available for the selected date range."
                 }

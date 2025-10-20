@@ -80,6 +80,7 @@ interface User {
   email: string;
   organization_id?: number;
   organization_name?: string;
+  user_type?: "staff" | "student";
   status: string;
   created_at?: string;
   updated_at?: string;
@@ -105,6 +106,7 @@ interface UserFormData {
   phone: string;
   email: string;
   organization_id: number;
+  user_type?: "staff" | "student";
 }
 
 interface AdminFormData {
@@ -121,6 +123,7 @@ const initialFormData: UserFormData = {
   phone: "",
   email: "",
   organization_id: 0,
+  user_type: "student",
 };
 
 const initialAdminFormData: AdminFormData = {
@@ -135,6 +138,7 @@ export default function UsersPage() {
   const [activeTab, setActiveTab] = useState<"users" | "admins">("users");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOrganization, setSelectedOrganization] = useState("");
+  const [selectedUserType, setSelectedUserType] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddAdminDialogOpen, setIsAddAdminDialogOpen] = useState(false);
@@ -219,6 +223,7 @@ export default function UsersPage() {
       phone: user.phone_number,
       email: user.email,
       organization_id: user.organization_id || 0,
+      user_type: user.user_type || "student",
     });
     setIsEditDialogOpen(true);
   };
@@ -347,7 +352,12 @@ export default function UsersPage() {
       selectedOrganization === "all" ||
       user.organization_id?.toString() === selectedOrganization;
 
-    return matchesSearch && matchesOrganization;
+    const matchesUserType =
+      !selectedUserType ||
+      selectedUserType === "all" ||
+      user.user_type === selectedUserType;
+
+    return matchesSearch && matchesOrganization && matchesUserType;
   });
 
   const filteredAdmins = admins.filter((admin: Admin) => {
@@ -888,6 +898,26 @@ export default function UsersPage() {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="user-type">User Type *</Label>
+                    <Select
+                      value={formData.user_type || "student"}
+                      onValueChange={(value: "staff" | "student") =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          user_type: value,
+                        }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select user type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="student">Student</SelectItem>
+                        <SelectItem value="staff">Staff</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <DialogFooter>
                   <Button
@@ -1010,6 +1040,26 @@ export default function UsersPage() {
                       </SelectContent>
                     </Select>
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="edit-user-type">User Type *</Label>
+                    <Select
+                      value={formData.user_type || "student"}
+                      onValueChange={(value: "staff" | "student") =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          user_type: value,
+                        }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select user type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="student">Student</SelectItem>
+                        <SelectItem value="staff">Staff</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <DialogFooter>
                   <Button
@@ -1077,6 +1127,19 @@ export default function UsersPage() {
                 ))}
               </SelectContent>
             </Select>
+            <Select
+              value={selectedUserType || "all"}
+              onValueChange={(value) => setSelectedUserType(value === "all" ? "" : value)}
+            >
+              <SelectTrigger className="w-full lg:w-[180px]">
+                <SelectValue placeholder="All User Types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All User Types</SelectItem>
+                <SelectItem value="staff">Staff</SelectItem>
+                <SelectItem value="student">Student</SelectItem>
+              </SelectContent>
+            </Select>
             <Button onClick={() => refetchUsers()} variant="outline">
               <RefreshCw className="mr-2 h-4 w-4" />
               Refresh
@@ -1105,6 +1168,7 @@ export default function UsersPage() {
                   <TableHead>Punching Code</TableHead>
                   <TableHead>Contact Info</TableHead>
                   <TableHead>Organization</TableHead>
+                  <TableHead>User Type</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Joined Date</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -1147,6 +1211,11 @@ export default function UsersPage() {
                           </span>
                         </div>
                       )}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={user.user_type === "staff" ? "default" : "secondary"}>
+                        {user.user_type === "staff" ? "Staff" : "Student"}
+                      </Badge>
                     </TableCell>
                     <TableCell>{getStatusBadge(user.status)}</TableCell>
                     <TableCell>
@@ -1234,12 +1303,14 @@ export default function UsersPage() {
               </h3>
               <p className="text-muted-foreground mb-4">
                 {searchTerm ||
-                (selectedOrganization && selectedOrganization !== "all")
+                (selectedOrganization && selectedOrganization !== "all") ||
+                (selectedUserType && selectedUserType !== "all")
                   ? "No users match your current filters."
                   : "Get started by adding your first customer."}
               </p>
               {!searchTerm &&
-                (!selectedOrganization || selectedOrganization === "all") && (
+                (!selectedOrganization || selectedOrganization === "all") &&
+                (!selectedUserType || selectedUserType === "all") && (
                   <Button onClick={() => setIsAddDialogOpen(true)}>
                     <Plus className="mr-2 h-4 w-4" />
                     Add User
@@ -1389,7 +1460,8 @@ export default function UsersPage() {
                       : "Get started by adding your first admin."}
                   </p>
                   {!searchTerm &&
-                    (!selectedOrganization || selectedOrganization === "all") && (
+                    (!selectedOrganization || selectedOrganization === "all") &&
+                    (!selectedUserType || selectedUserType === "all") && (
                       <Button onClick={() => setIsAddAdminDialogOpen(true)}>
                         <Shield className="mr-2 h-4 w-4" />
                         Add Admin

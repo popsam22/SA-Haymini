@@ -130,45 +130,28 @@ class ApiClient {
 
   // Users
   async getUsers() {
-    // Backend doesn't have a direct GET /users endpoint
-    // Get users from all organizations instead
-    try {
-      const organizationsResponse = await this.getOrganizations();
-      const organizations = Array.isArray(organizationsResponse)
-        ? organizationsResponse
-        : (organizationsResponse as any)?.organizations &&
-            Array.isArray((organizationsResponse as any).organizations)
-          ? (organizationsResponse as any).organizations
-          : [];
+    // Use the new search endpoint
+    return this.request("/users", {
+      method: "GET",
+    });
+  }
 
-      const allUsers = [];
-      for (const org of organizations) {
-        try {
-          const orgUsers = await this.getUsersByOrganization(org.id);
-          const usersArray = Array.isArray(orgUsers)
-            ? orgUsers
-            : (orgUsers as any)?.users && Array.isArray((orgUsers as any).users)
-              ? (orgUsers as any).users
-              : [];
+  async searchUsers(params?: {
+    search?: string;
+    organization_id?: number;
+    user_type?: "staff" | "student";
+    status?: "active" | "inactive";
+  }) {
+    const queryParams = new URLSearchParams();
+    if (params?.search) queryParams.append("search", params.search);
+    if (params?.organization_id) queryParams.append("organization_id", params.organization_id.toString());
+    if (params?.user_type) queryParams.append("user_type", params.user_type);
+    if (params?.status) queryParams.append("status", params.status);
 
-          const usersWithOrgName = usersArray.map((user: any) => ({
-            ...user,
-            organization_name: org.name,
-          }));
-          allUsers.push(...usersWithOrgName);
-        } catch (error) {
-          console.error(
-            `Failed to fetch users for organization ${org.id}:`,
-            error,
-          );
-        }
-      }
-
-      return allUsers;
-    } catch (error) {
-      console.error("Failed to fetch users:", error);
-      return [];
-    }
+    const query = queryParams.toString();
+    return this.request(`/users${query ? `?${query}` : ""}`, {
+      method: "GET",
+    });
   }
 
   async getUsersByOrganization(organizationId: number) {
