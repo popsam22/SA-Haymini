@@ -125,7 +125,13 @@ export default function DeviceAssignments() {
     ? organizationsResponse
     : (organizationsResponse as any)?.organizations || [];
 
-  const users = Array.isArray(usersResponse) ? usersResponse : [];
+  const users = Array.isArray(usersResponse)
+    ? usersResponse
+    : (usersResponse as any)?.users
+      ? Array.isArray((usersResponse as any).users)
+        ? (usersResponse as any).users
+        : []
+      : [];
   const devices = Array.isArray(devicesResponse) ? devicesResponse : [];
   const assignments = Array.isArray(assignmentsResponse)
     ? assignmentsResponse
