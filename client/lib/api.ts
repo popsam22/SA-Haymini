@@ -311,6 +311,7 @@ class ApiClient {
   async updateDevice(
     serialNumber: string,
     data: {
+      name?: string;
       device_name?: string;
       serial_number?: string;
       organization_id?: number;
@@ -329,9 +330,12 @@ class ApiClient {
     }
 
     // Build update payload with allowed fields
+    // Map 'name' to 'device_name' for backend compatibility
     const updatePayload: any = {};
 
-    if (data.device_name !== undefined) updatePayload.device_name = data.device_name;
+    if (data.name !== undefined || data.device_name !== undefined) {
+      updatePayload.device_name = data.device_name || data.name;
+    }
     if (data.device_model !== undefined) updatePayload.device_model = data.device_model;
     if (data.ip_address !== undefined) updatePayload.ip_address = data.ip_address;
     if (data.status !== undefined) updatePayload.status = data.status;
