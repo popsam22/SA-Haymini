@@ -311,7 +311,7 @@ class ApiClient {
   async updateDevice(
     serialNumber: string,
     data: {
-      name?: string;
+      device_name?: string;
       serial_number?: string;
       organization_id?: number;
       device_model?: string;
@@ -319,27 +319,28 @@ class ApiClient {
       status?: string;
     },
   ) {
-    if (data.status) {
-      // Update device status
-      return this.request(`/devices/${serialNumber}`, {
-        method: "PUT",
-        body: JSON.stringify({ status: data.status }),
-      });
-    }
-
-    if (data.organization_id) {
-      // Assign device to organization
+    // Check if updating organization only (use dedicated endpoint)
+    if (data.organization_id && Object.keys(data).length === 1) {
+      // Assign device to organization using dedicated endpoint
       return this.request(`/devices/${serialNumber}/organization`, {
         method: "PUT",
         body: JSON.stringify({ organization_id: data.organization_id }),
       });
     }
 
-    // For other updates, we need to implement additional endpoints in the backend
-    return Promise.resolve({
-      status: "success",
-      message: "Device updated",
-      device: { ...data, serial_number: serialNumber },
+    // Build update payload with allowed fields
+    const updatePayload: any = {};
+
+    if (data.device_name !== undefined) updatePayload.device_name = data.device_name;
+    if (data.device_model !== undefined) updatePayload.device_model = data.device_model;
+    if (data.ip_address !== undefined) updatePayload.ip_address = data.ip_address;
+    if (data.status !== undefined) updatePayload.status = data.status;
+    if (data.organization_id !== undefined) updatePayload.organization_id = data.organization_id;
+
+    // Use the general update endpoint that now supports multiple fields
+    return this.request(`/devices/${serialNumber}`, {
+      method: "PUT",
+      body: JSON.stringify(updatePayload),
     });
   }
 
