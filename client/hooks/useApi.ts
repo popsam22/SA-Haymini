@@ -152,8 +152,21 @@ export const useDeleteUser = () => {
   return useMutation({
     mutationFn: ({ punchingCode, organizationId }: { punchingCode: string; organizationId?: number }) =>
       apiClient.deleteUser(punchingCode, organizationId),
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      // Invalidate all users queries
       queryClient.invalidateQueries({ queryKey: ['users'] });
+
+      // If deleted from specific organization, invalidate that organization's users cache
+      if (variables.organizationId) {
+        queryClient.invalidateQueries({
+          queryKey: ['organizations', variables.organizationId, 'users']
+        });
+      }
+
+      // Also invalidate user-specific logs if they exist
+      queryClient.invalidateQueries({
+        queryKey: ['user-logs', variables.punchingCode]
+      });
     },
   });
 };
