@@ -220,6 +220,14 @@ class ApiClient {
     });
   }
 
+  async deleteUser(punchingCode: string, organizationId?: number) {
+    const body = organizationId ? JSON.stringify({ organization_id: organizationId }) : undefined;
+    return this.request(`/users/${punchingCode}`, {
+      method: "DELETE",
+      body,
+    });
+  }
+
   // Devices
   async getDevices() {
     // The backend doesn't have a GET /api/devices endpoint yet

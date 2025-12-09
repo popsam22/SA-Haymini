@@ -137,9 +137,21 @@ export const useActivateUser = () => {
 
 export const useDeactivateUser = () => {
   const queryClient = useQueryClient();
-  
+
   return useMutation({
     mutationFn: (punchingCode: string) => apiClient.deactivateUser(punchingCode),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+  });
+};
+
+export const useDeleteUser = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ punchingCode, organizationId }: { punchingCode: string; organizationId?: number }) =>
+      apiClient.deleteUser(punchingCode, organizationId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
     },

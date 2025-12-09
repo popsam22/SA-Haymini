@@ -8,6 +8,7 @@ import {
   useUpdateUser,
   useActivateUser,
   useDeactivateUser,
+  useDeleteUser,
   useCreateAdmin,
   useUpdateAdmin,
   useAdmins,
@@ -33,6 +34,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
@@ -69,6 +80,7 @@ import {
   RefreshCw,
   CheckCircle,
   Shield,
+  Trash2,
 } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
 import { CSVUpload } from "../components/CSVUpload";
@@ -143,6 +155,8 @@ export default function UsersPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isAddAdminDialogOpen, setIsAddAdminDialogOpen] = useState(false);
   const [isEditAdminDialogOpen, setIsEditAdminDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [formData, setFormData] = useState<UserFormData>(initialFormData);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [editingAdmin, setEditingAdmin] = useState<Admin | null>(null);
@@ -174,6 +188,7 @@ export default function UsersPage() {
   const updateAdminMutation = useUpdateAdmin();
   const activateUserMutation = useActivateUser();
   const deactivateUserMutation = useDeactivateUser();
+  const deleteUserMutation = useDeleteUser();
 
   // Handle success and error for create user
   const handleCreateUser = async (data: UserFormData) => {
@@ -314,6 +329,36 @@ export default function UsersPage() {
         variant: "destructive",
       });
     }
+  };
+
+  // Handle delete user
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+
+    try {
+      await deleteUserMutation.mutateAsync({
+        punchingCode: userToDelete.punching_code,
+        organizationId: userToDelete.organization_id,
+      });
+      setIsDeleteDialogOpen(false);
+      setUserToDelete(null);
+      toast({
+        title: "Success",
+        description: "User deleted successfully from the organization.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete user.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Open delete confirmation dialog
+  const handleOpenDeleteDialog = (user: User) => {
+    setUserToDelete(user);
+    setIsDeleteDialogOpen(true);
   };
 
   const users = Array.isArray(usersResponse)
@@ -1287,6 +1332,14 @@ export default function UsersPage() {
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleOpenDeleteDialog(user)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -1473,6 +1526,51 @@ export default function UsersPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Delete User Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete{" "}
+              <span className="font-semibold">{userToDelete?.name}</span> (
+              {userToDelete?.punching_code}) from the organization and remove all
+              associated data including:
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>Device assignments</li>
+                <li>Attendance logs</li>
+                <li>Daily attendance records</li>
+                <li>Absence records</li>
+              </ul>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel
+              onClick={() => {
+                setIsDeleteDialogOpen(false);
+                setUserToDelete(null);
+              }}
+            >
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteUser}
+              disabled={deleteUserMutation.isPending}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              {deleteUserMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete User"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
