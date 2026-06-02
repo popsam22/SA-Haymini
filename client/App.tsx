@@ -83,7 +83,7 @@ const App = () => (
     <AuthProvider>
       <TooltipProvider>
         <Toaster />
-        <Sonner />
+        <Sonner position="top-right" />
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<RootRedirect />} />

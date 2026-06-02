@@ -64,7 +64,7 @@ import {
   Phone
 } from "lucide-react";
 import { format, isValid } from "date-fns";
-import { useToast } from "../hooks/use-toast";
+import { toast } from "sonner";
 
 interface AttendanceLog {
   timesheetid: number;
@@ -117,7 +117,6 @@ export default function Attendance() {
   const [endDate, setEndDate] = useState<Date>(new Date());
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
 
-  const { toast } = useToast();
 
   // API queries
   const {
@@ -245,8 +244,7 @@ export default function Attendance() {
 
     XLSX.writeFile(workbook, `${filename}.xlsx`);
 
-    toast({
-      title: "Export Successful",
+    toast.success("Export Successful", {
       description: `${exportData.length} records exported to ${filename}.xlsx`,
     });
   };
@@ -258,11 +256,7 @@ export default function Attendance() {
 
   const handleExportByOrganization = () => {
     if (!selectedOrganization || selectedOrganization === "all") {
-      toast({
-        title: "Error",
-        description: "Please select a specific organization to export.",
-        variant: "destructive",
-      });
+      toast.error("Please select a specific organization to export.");
       return;
     }
     
@@ -273,11 +267,7 @@ export default function Attendance() {
 
   const handleExportByDevice = () => {
     if (!selectedDevice || selectedDevice === "all") {
-      toast({
-        title: "Error",
-        description: "Please select a specific device to export.",
-        variant: "destructive",
-      });
+      toast.error("Please select a specific device to export.");
       return;
     }
     
@@ -287,11 +277,7 @@ export default function Attendance() {
 
   const handleExportByUser = () => {
     if (!selectedUser || selectedUser === "all") {
-      toast({
-        title: "Error",
-        description: "Please select a specific user to export.",
-        variant: "destructive",
-      });
+      toast.error("Please select a specific user to export.");
       return;
     }
     

@@ -43,7 +43,7 @@ import {
   Building2,
   Activity,
 } from "lucide-react";
-import { useToast } from "../hooks/use-toast";
+import { toast } from "sonner";
 
 interface Device {
   serial_number: string;
@@ -91,7 +91,6 @@ export default function Devices() {
   const [editFormData, setEditFormData] =
     useState<DeviceFormData>(initialFormData);
 
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const {
@@ -117,17 +116,10 @@ export default function Devices() {
       queryClient.invalidateQueries({ queryKey: ["devices"] });
       setFormData(initialFormData);
       setIsAddDialogOpen(false);
-      toast({
-        title: "Success",
-        description: "Device registered successfully.",
-      });
+      toast.success("Device registered successfully.");
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to register device.",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Failed to register device.");
     },
   });
 
@@ -141,17 +133,10 @@ export default function Devices() {
       queryClient.invalidateQueries({ queryKey: ["devices"] });
       setIsEditDialogOpen(false);
       setSelectedDevice(null);
-      toast({
-        title: "Success",
-        description: "Device updated successfully.",
-      });
+      toast.success("Device updated successfully.");
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update device.",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Failed to update device.");
     },
   });
 
@@ -196,11 +181,7 @@ export default function Devices() {
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.organization_id === 0) {
-      toast({
-        title: "Error",
-        description: "Please select an organization.",
-        variant: "destructive",
-      });
+      toast.error("Please select an organization.");
       return;
     }
     await createDevice.mutateAsync(formData);

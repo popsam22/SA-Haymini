@@ -40,7 +40,7 @@ import {
   ExternalLink,
   LogIn,
 } from "lucide-react";
-import { useToast } from "../hooks/use-toast";
+import { toast } from "sonner";
 
 interface Admin {
   id: number;
@@ -72,7 +72,6 @@ export default function Admins() {
   });
 
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   const {
     data: adminsResponse,
@@ -127,18 +126,13 @@ export default function Admins() {
       });
 
       if (response.status === 'success') {
-        toast({
-          title: "Admin Created",
+        toast.success("Admin Created", {
           description: "Admin account created successfully. Welcome email sent to the admin.",
         });
       }
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create admin",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Failed to create admin");
     },
   });
 
@@ -155,17 +149,10 @@ export default function Admins() {
       queryClient.invalidateQueries({ queryKey: ["admins"] });
       setIsEditDialogOpen(false);
       setSelectedAdmin(null);
-      toast({
-        title: "Admin Updated",
-        description: "Admin details updated successfully.",
-      });
+      toast.success("Admin details updated successfully.");
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update admin",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Failed to update admin");
     },
   });
 
@@ -181,31 +168,17 @@ export default function Admins() {
         // Construct admin portal URL with token
         const adminPortalUrl = `https://haymini-app.netlify.app/login?token=${encodeURIComponent(token)}`;
         window.open(adminPortalUrl, '_blank');
-        toast({
-          title: "Impersonation Started",
-          description: "Opening admin portal in new window.",
-        });
+        toast.success("Opening admin portal in new window.");
       } else if (response.admin_portal_url) {
         // Fallback to backend-provided URL
         window.open(response.admin_portal_url, '_blank');
-        toast({
-          title: "Impersonation Started",
-          description: "Opening admin portal in new window.",
-        });
+        toast.success("Opening admin portal in new window.");
       } else {
-        toast({
-          title: "Error",
-          description: "No impersonation token received from server",
-          variant: "destructive",
-        });
+        toast.error("No impersonation token received from server");
       }
     },
     onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to impersonate admin",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Failed to impersonate admin");
     },
   });
 
@@ -238,11 +211,7 @@ export default function Admins() {
 
   const handleImpersonate = (admin: Admin) => {
     if (admin.role === 'super_admin') {
-      toast({
-        title: "Cannot Impersonate",
-        description: "Cannot impersonate another super admin.",
-        variant: "destructive",
-      });
+      toast.error("Cannot impersonate another super admin.");
       return;
     }
     impersonateMutation.mutate(admin.id);

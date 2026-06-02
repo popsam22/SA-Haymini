@@ -82,7 +82,7 @@ import {
   Shield,
   Trash2,
 } from "lucide-react";
-import { useToast } from "../hooks/use-toast";
+import { toast } from "sonner";
 import { CSVUpload } from "../components/CSVUpload";
 
 interface User {
@@ -163,7 +163,6 @@ export default function UsersPage() {
   const [adminFormData, setAdminFormData] =
     useState<AdminFormData>(initialAdminFormData);
 
-  const { toast } = useToast();
 
   const {
     data: usersResponse = [],
@@ -196,16 +195,9 @@ export default function UsersPage() {
       await createUserMutation.mutateAsync(data);
       setFormData(initialFormData);
       setIsAddDialogOpen(false);
-      toast({
-        title: "Success",
-        description: "User created successfully.",
-      });
+      toast.success("User created successfully.");
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create user.",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Failed to create user.");
     }
   };
 
@@ -216,16 +208,9 @@ export default function UsersPage() {
       setFormData(initialFormData);
       setEditingUser(null);
       setIsEditDialogOpen(false);
-      toast({
-        title: "Success",
-        description: "User updated successfully.",
-      });
+      toast.success("User updated successfully.");
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update user.",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Failed to update user.");
     }
   };
 
@@ -250,16 +235,9 @@ export default function UsersPage() {
       setAdminFormData(initialAdminFormData);
       setIsAddAdminDialogOpen(false);
       refetchAdmins(); // Refresh admins list
-      toast({
-        title: "Success",
-        description: "Admin created successfully.",
-      });
+      toast.success("Admin created successfully.");
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to create admin.",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Failed to create admin.");
     }
   };
 
@@ -271,16 +249,9 @@ export default function UsersPage() {
       setEditingAdmin(null);
       setIsEditAdminDialogOpen(false);
       refetchAdmins(); // Refresh admins list
-      toast({
-        title: "Success",
-        description: "Admin updated successfully.",
-      });
+      toast.success("Admin updated successfully.");
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to update admin.",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Failed to update admin.");
     }
   };
 
@@ -301,16 +272,9 @@ export default function UsersPage() {
   const handleActivateUser = async (punchingCode: string) => {
     try {
       await activateUserMutation.mutateAsync(punchingCode);
-      toast({
-        title: "Success",
-        description: "User activated successfully.",
-      });
+      toast.success("User activated successfully.");
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to activate user.",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Failed to activate user.");
     }
   };
 
@@ -318,16 +282,9 @@ export default function UsersPage() {
   const handleDeactivateUser = async (punchingCode: string) => {
     try {
       await deactivateUserMutation.mutateAsync(punchingCode);
-      toast({
-        title: "Success",
-        description: "User deactivated successfully.",
-      });
+      toast.success("User deactivated successfully.");
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to deactivate user.",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Failed to deactivate user.");
     }
   };
 
@@ -342,16 +299,9 @@ export default function UsersPage() {
       });
       setIsDeleteDialogOpen(false);
       setUserToDelete(null);
-      toast({
-        title: "Success",
-        description: "User deleted successfully from the organization.",
-      });
+      toast.success("User deleted successfully from the organization.");
     } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to delete user.",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Failed to delete user.");
     }
   };
 
@@ -421,11 +371,7 @@ export default function UsersPage() {
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.organization_id === 0) {
-      toast({
-        title: "Error",
-        description: "Please select an organization.",
-        variant: "destructive",
-      });
+      toast.error("Please select an organization.");
       return;
     }
     await handleCreateUser(formData);
@@ -434,11 +380,7 @@ export default function UsersPage() {
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.organization_id === 0) {
-      toast({
-        title: "Error",
-        description: "Please select an organization.",
-        variant: "destructive",
-      });
+      toast.error("Please select an organization.");
       return;
     }
     await handleUpdateUser(formData);
@@ -447,11 +389,7 @@ export default function UsersPage() {
   const handleCreateAdminSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (adminFormData.role === "admin" && !adminFormData.organization_id) {
-      toast({
-        title: "Error",
-        description: "Please select an organization for admin role.",
-        variant: "destructive",
-      });
+      toast.error("Please select an organization for admin role.");
       return;
     }
     await handleCreateAdmin(adminFormData);
@@ -460,11 +398,7 @@ export default function UsersPage() {
   const handleEditAdminSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (adminFormData.role === "admin" && !adminFormData.organization_id) {
-      toast({
-        title: "Error",
-        description: "Please select an organization for admin role.",
-        variant: "destructive",
-      });
+      toast.error("Please select an organization for admin role.");
       return;
     }
     if (editingAdmin) {

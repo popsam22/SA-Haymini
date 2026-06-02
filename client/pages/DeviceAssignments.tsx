@@ -45,7 +45,7 @@ import {
   Link as LinkIcon,
   Unlink,
 } from "lucide-react";
-import { useToast } from "../hooks/use-toast";
+import { toast } from "sonner";
 
 interface Assignment {
   id: number;
@@ -90,7 +90,6 @@ export default function DeviceAssignments() {
   const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
 
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   const { data: organizationsResponse, isLoading: isLoadingOrgs } = useQuery({
     queryKey: ["organizations"],
@@ -180,17 +179,10 @@ export default function DeviceAssignments() {
       setIsAssignDialogOpen(false);
       setSelectedDevice(null);
       setSelectedUsers([]);
-      toast({
-        title: "Assignment Successful",
-        description: "Users assigned to device successfully.",
-      });
+      toast.success("Users assigned to device successfully.");
     },
     onError: (error: any) => {
-      toast({
-        title: "Assignment Failed",
-        description: error.message || "Failed to assign users to device",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Failed to assign users to device");
     },
   });
 
@@ -204,17 +196,10 @@ export default function DeviceAssignments() {
     }) => apiClient.removeUserFromDevice(userId, deviceId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["device-assignments"] });
-      toast({
-        title: "Unassignment Successful",
-        description: "User removed from device successfully.",
-      });
+      toast.success("User removed from device successfully.");
     },
     onError: (error: any) => {
-      toast({
-        title: "Unassignment Failed",
-        description: error.message || "Failed to remove user from device",
-        variant: "destructive",
-      });
+      toast.error(error.message || "Failed to remove user from device");
     },
   });
 
@@ -224,11 +209,7 @@ export default function DeviceAssignments() {
       selectedUsers.length === 0 ||
       !selectedOrganization
     ) {
-      toast({
-        title: "Invalid Selection",
-        description: "Please select a device and at least one user.",
-        variant: "destructive",
-      });
+      toast.error("Please select a device and at least one user.");
       return;
     }
 

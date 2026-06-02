@@ -36,7 +36,7 @@ import {
   AlertCircle,
   Users,
 } from "lucide-react";
-import { useToast } from "../hooks/use-toast";
+import { toast } from "sonner";
 
 interface Organization {
   id: number;
@@ -76,7 +76,6 @@ export function CSVUpload({ organizations }: CSVUploadProps) {
   const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
 
   const queryClient = useQueryClient();
-  const { toast } = useToast();
 
   const uploadMutation = useMutation({
     mutationFn: ({ file, orgId }: { file: File; orgId?: number }) =>
@@ -85,19 +84,29 @@ export function CSVUpload({ organizations }: CSVUploadProps) {
       setUploadResult(result);
       queryClient.invalidateQueries({ queryKey: ["users"] });
 
-      if (result.status === 'success') {
-        toast({
-          title: "CSV Upload Successful",
-          description: `Created ${result.user_creation?.created || 0} users, updated ${result.user_creation?.updated || 0} users.`,
-        });
+      if (result.status === 'error') {
+        const errs: string[] = (result as any).errors ?? [];
+        if (errs.length > 0) {
+          errs.forEach((e) => toast.error(e));
+        } else {
+          toast.error(result.message);
+        }
+        return;
       }
+
+      toast.success("CSV Upload Successful", {
+        description: `Created ${result.user_creation?.created || 0} users, updated ${result.user_creation?.updated || 0} users.`,
+      });
     },
     onError: (error: any) => {
-      toast({
-        title: "Upload Failed",
-        description: error.message || "Failed to upload CSV file",
-        variant: "destructive",
-      });
+      const errs: string[] = error.response?.errors ?? [];
+      if (errs.length > 0) {
+        errs.forEach((e) => toast.error(e));
+      } else {
+        toast.error("Upload Failed", {
+          description: error.message || "Failed to upload CSV file",
+        });
+      }
     },
   });
 
@@ -115,16 +124,13 @@ export function CSVUpload({ organizations }: CSVUploadProps) {
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
 
-      toast({
-        title: "Template Downloaded",
+      toast.success("Template Downloaded", {
         description: "CSV template downloaded successfully.",
       });
     },
     onError: (error: any) => {
-      toast({
-        title: "Download Failed",
+      toast.error("Download Failed", {
         description: error.message || "Failed to download template",
-        variant: "destructive",
       });
     },
   });
@@ -135,22 +141,14 @@ export function CSVUpload({ organizations }: CSVUploadProps) {
       setSelectedFile(file);
       setUploadResult(null);
     } else {
-      toast({
-        title: "Invalid File",
-        description: "Please select a CSV file.",
-        variant: "destructive",
-      });
+      toast.error("Invalid File", { description: "Please select a CSV file." });
       setSelectedFile(null);
     }
   };
 
   const handleUpload = () => {
     if (!selectedFile) {
-      toast({
-        title: "No File Selected",
-        description: "Please select a CSV file to upload.",
-        variant: "destructive",
-      });
+      toast.error("No File Selected", { description: "Please select a CSV file to upload." });
       return;
     }
 
